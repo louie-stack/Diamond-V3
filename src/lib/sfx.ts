@@ -7,6 +7,11 @@
  *   ching - a sale going through
  *   buzz  - denied
  *   hum   - a neon sign buzzing on
+ *   strike - a match dragged and catching
+ *   crackle - paper burning, for a few seconds
+ *   swing - a hanging lamp knocked
+ *   click - a dial notch / a pin popping
+ *   chime - something quietly unlocked
  */
 let ctx: AudioContext | null = null;
 let on = false;
@@ -127,5 +132,32 @@ export const sfx = {
   hum() {
     tone(120, 118, 0.55, 0.05, "sawtooth");
     noise(0.04, 0.06, 1500, 6000);
+  },
+  strike() {
+    noise(0.22, 0.2, 1200, 7000);
+    setTimeout(() => noise(0.5, 0.12, 200, 2400), 200);
+  },
+  crackle(seconds = 3) {
+    if (!on) return;
+    const end = performance.now() + seconds * 1000;
+    const pop = () => {
+      if (performance.now() > end) return;
+      noise(0.012 + Math.random() * 0.03, 0.05 + Math.random() * 0.12, 900 + Math.random() * 2500, 9000);
+      setTimeout(pop, 25 + Math.random() * 110);
+    };
+    noise(seconds, 0.035, 150, 900);
+    pop();
+  },
+  swing() {
+    tone(420, 380, 0.5, 0.04, "triangle");
+    noise(0.05, 0.08, 600, 4000);
+  },
+  click() {
+    noise(0.018, 0.16, 2500, 10000);
+  },
+  chime() {
+    tone(880, 880, 0.12, 0.08, "triangle");
+    setTimeout(() => tone(1175, 1175, 0.18, 0.08, "triangle"), 90);
+    setTimeout(() => tone(1568, 1568, 0.5, 0.07, "triangle"), 180);
   },
 };

@@ -1,6 +1,8 @@
 import Calculator from "./Calculator";
 import SceneBg from "./SceneBg";
 import SecHead from "./SecHead";
+import Lamp from "./Lamp";
+import PinnedCard from "./PinnedCard";
 import Rip from "./Rip";
 
 /* ---------------------------------------------------------------- */
@@ -35,7 +37,8 @@ export function EvidenceBoard() {
         <SecHead n="02" label="The 1% rule" size="h-m" title="One rule changes the game." aside="Four exhibits. One mechanism. No exceptions." />
 
         <div className="mt-16 grid border-l border-t border-[var(--line-d)] sm:grid-cols-2 lg:mt-24 lg:grid-cols-4">
-          {EXHIBITS.map((e, i) => (
+          {EXHIBITS.map((e, i) => {
+            const card = (
             <article
               key={e.tag}
               className="group relative flex min-h-[440px] flex-col border-b border-r border-[var(--line-d)] p-7 transition-colors duration-500 hover:bg-[var(--night-3)] max-sm:min-h-0 max-sm:p-6 sm:p-8"
@@ -62,7 +65,10 @@ export function EvidenceBoard() {
                 ))}
               </div>
             </article>
-          ))}
+            );
+            // the last exhibit is only held up by two pins
+            return i === EXHIBITS.length - 1 ? <PinnedCard key={e.tag}>{card}</PinnedCard> : card;
+          })}
         </div>
 
         <div className="mt-20 lg:mt-28" data-fx="rise">
@@ -154,13 +160,11 @@ export function Wanted() {
 /* ---------------------------------------------------------------- */
 export function Interrogation() {
   return (
-    <section id="why" data-spot className="sec relative scroll-mt-16 overflow-hidden bg-black !pb-[clamp(140px,15vw,230px)] [--mx:50%] [--my:0%]">
+    <section id="why" className="sec relative scroll-mt-16 overflow-hidden bg-black !pb-[clamp(140px,15vw,230px)]">
       <Rip color="var(--bone)" seed={13} inside />
       <SceneBg src="/art/case/surveillance.webp" tone="#000" height="min(100vh, 960px)" opacity={0.42} position="center 40%" />
-      <div
-        className="pointer-events-none absolute inset-0"
-        style={{ background: "radial-gradient(640px 640px at var(--mx) var(--my), rgba(204,255,0,0.09), transparent 70%), radial-gradient(60% 50% at 50% 0%, rgba(236,230,214,0.08), transparent 70%)" }}
-      />
+      {/* the room's only other light; it swings if you knock it */}
+      <Lamp />
       <div className="wrap relative">
         <div className="mx-auto max-w-[1100px] text-center">
           <div className="mx-auto max-w-[520px]">

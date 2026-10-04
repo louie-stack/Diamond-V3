@@ -73,7 +73,7 @@ export const FAQ = [
 ];
 
 export const TOKENOMICS = [
-  { k: "Total supply", v: "1,000,000,000", s: "$DIAMOND" },
+  { k: "Total supply", v: "1B", s: "$DIAMOND" },
   { k: "Genesis liquidity", v: "100%", s: "of supply" },
   { k: "Team tokens", v: "0%", s: "none" },
   { k: "Presale", v: "0%", s: "none" },

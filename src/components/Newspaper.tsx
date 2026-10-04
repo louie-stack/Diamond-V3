@@ -1,4 +1,5 @@
 import { tornTop, tornBottom } from "./Rip";
+import BurnPaper from "./BurnPaper";
 
 /** Stop the presses. A broadsheet front page on a wall of other people's bad days. */
 export default function Newspaper() {
@@ -14,12 +15,12 @@ export default function Newspaper() {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/art/case/press-wall.webp" alt="" className="absolute inset-0 h-full w-full object-cover" />
           </picture>
-          <div className="absolute inset-0 bg-[radial-gradient(50%_55%_at_50%_50%,rgba(10,9,6,0.9),rgba(10,9,6,0.74)_60%,rgba(10,9,6,0.7)_100%)]" />
+          <div className="press__shade absolute inset-0 bg-[radial-gradient(50%_55%_at_50%_50%,rgba(10,9,6,0.9),rgba(10,9,6,0.74)_60%,rgba(10,9,6,0.7)_100%)]" />
         </div>
       </div>
 
       <div className="wrap relative">
-        <article className="paper" data-fx="rise">
+        <BurnPaper>
           <span className="paper__stain" aria-hidden="true" />
 
           {/* top strip */}
@@ -97,7 +98,7 @@ export default function Newspaper() {
               <span key={t} className={`meta !text-[10px] ${i === 0 ? "bg-[var(--ink)] px-2 py-0.5 text-[var(--paper)]" : ""}`}>{t}</span>
             ))}
           </div>
-        </article>
+        </BurnPaper>
       </div>
     </section>
   );

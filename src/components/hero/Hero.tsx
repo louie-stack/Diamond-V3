@@ -2,16 +2,15 @@
 
 import { useEffect, useRef } from "react";
 import gsap from "gsap";
-import { SplitText } from "gsap/SplitText";
 import { LINKS } from "@/content";
 import { createGlass, type Glass } from "./glass";
-
-gsap.registerPlugin(SplitText);
 
 const KEY_ART = "/art/case/wanted-hq.webp";
 /** desktop design width: the layout as approved at 110% zoom on a 1440 screen */
 const DESIGN_W = 1309;
 const LOGLINE = "What happens when jeeting is prohibited by smart contract?";
+/** the same fit as the effect below, inlined so it runs while the page is still loading */
+const FIT_NOW = `(function(){var el=document.currentScript&&document.currentScript.parentElement;if(!el||innerWidth<1024)return;var z=innerWidth/${DESIGN_W};el.classList.add("is-locked");el.style.zoom=String(z);el.style.width="${DESIGN_W}px";el.style.height=(innerHeight/z)+"px";})();`;
 
 /** One screen. The detective, through a rain-streaked window. */
 export default function Hero() {
@@ -122,17 +121,14 @@ export default function Hero() {
     };
   }, []);
 
-  // entrance, after the cold open
+  // the logline types out after the cold open
   useEffect(() => {
     const el = title.current;
     if (!el) return;
     let go = () => {};
     const ctx = gsap.context(() => {
-      const split = SplitText.create(el, { type: "chars,lines", mask: "lines" });
+      // the title, buttons and stats are simply there; only the logline types itself out, case-file terminal style
       const tl = gsap.timeline({ paused: true });
-      tl.from(split.chars, { yPercent: 110, duration: 1.4, ease: "expo.out", stagger: 0.035 })
-        .from(".hero-fade", { opacity: 0, y: 16, duration: 1.1, ease: "expo.out", stagger: 0.08 }, 0.35);
-      // the logline types itself out, case-file terminal style
       const type = { n: 0 };
       const paint = () => {
         const n = Math.round(type.n);
@@ -140,7 +136,7 @@ export default function Hero() {
         if (rest.current) rest.current.textContent = LOGLINE.slice(n);
       };
       paint();
-      tl.to(type, { n: LOGLINE.length, duration: LOGLINE.length * 0.032, ease: "none", onUpdate: paint }, 0.7);
+      tl.to(type, { n: LOGLINE.length, duration: LOGLINE.length * 0.032, ease: "none", onUpdate: paint }, 0.3);
       go = () => tl.play();
 
       // scroll away: copy drifts up while the glass clears
@@ -166,7 +162,9 @@ export default function Hero() {
       <canvas ref={canvas} className="hero__glass" aria-hidden="true" />
       <div className="hero__shade" />
 
-      <div ref={stage} className="hero__stage">
+      <div ref={stage} className="hero__stage" suppressHydrationWarning>
+      {/* lock the layout before the first paint, so nothing jumps when the app takes over */}
+      <script dangerouslySetInnerHTML={{ __html: FIT_NOW }} />
       <div ref={content} className="hero__content wrap">
         <h1 ref={title} className="display hero__title">
           Diamond
@@ -183,7 +181,7 @@ export default function Hero() {
               <span ref={rest} className="rest">{LOGLINE}</span>
             </span>
           </p>
-          <div className="hero-fade flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <a href={LINKS.buy} className="btn btn--lime">
               Buy $DIAMOND <span className="btn__arrow" aria-hidden="true" />
             </a>
@@ -198,7 +196,7 @@ export default function Hero() {
         </div>
       </div>
 
-      <dl className="hero__stats hero-fade" aria-label="The rule">
+      <dl className="hero__stats" aria-label="The rule">
         <div><dt className="meta">Max outbound</dt><dd className="display">1%</dd></div>
         <div><dt className="meta">Cooldown</dt><dd className="display">24h</dd></div>
         <div><dt className="meta">Tax</dt><dd className="display">0%</dd></div>

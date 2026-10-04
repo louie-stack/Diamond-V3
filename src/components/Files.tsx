@@ -1,3 +1,4 @@
+import Vault from "./Vault";
 import { LINKS, TOKENOMICS } from "@/content";
 import CopyCA from "./CopyCA";
 import Faq from "./Faq";
@@ -208,25 +209,34 @@ export function Locker() {
         <SecHead n="08" label="Evidence locker" title="Simple on purpose." aside="Eight tags. Nothing hidden behind any of them." />
 
         <div className="mt-16 grid border-l border-t border-[var(--line-d)] max-sm:mt-12 max-sm:grid-cols-2 sm:grid-cols-2 lg:mt-20 lg:grid-cols-4">
-          {TOKENOMICS.map((t, i) => (
-            <div
-              key={t.k}
-              className={`group flex min-h-[230px] flex-col justify-between border-b border-r border-[var(--line-d)] p-7 transition-colors duration-500 hover:bg-[var(--lime)] hover:text-[var(--ink)] max-sm:min-h-[150px] max-sm:p-5 sm:p-8 ${i === 0 || i === TOKENOMICS.length - 1 ? "max-sm:col-span-2" : ""}`}
-              data-fx="rise"
-              data-fx-delay={(i % 4) * 0.06}
-            >
+          {TOKENOMICS.map((t, i) => {
+            const body = (
+              <>
               <div className="flex items-start justify-between">
                 <p className="meta opacity-60">{t.k}</p>
                 <span className="meta opacity-30">{String(i + 1).padStart(2, "0")}</span>
               </div>
               <div>
                 <p className={`display mt-8 leading-none tabular-nums max-sm:mt-5 ${t.v.length > 8 ? "text-[clamp(36px,3vw,46px)]" : "text-[clamp(64px,6vw,96px)] max-sm:text-[46px]"}`}>
-                  {i === 0 ? <span data-count="1000000000">{t.v}</span> : t.v}
+                  {t.v}
                 </p>
                 <p className="body-s mt-3 opacity-60 max-sm:mt-2 max-sm:text-[13px] max-sm:leading-snug">{t.s}</p>
               </div>
+              </>
+            );
+            // the 1% tag is a locker door with a dial on it
+            const vault = t.k === "Max outbound";
+            return (
+            <div
+              key={t.k}
+              className={`group ${vault ? "vault-cell relative" : ""} flex min-h-[230px] flex-col justify-between border-b border-r border-[var(--line-d)] p-7 transition-colors duration-500 hover:bg-[var(--lime)] hover:text-[var(--ink)] max-sm:min-h-[150px] max-sm:p-5 sm:p-8 ${i === 0 || i === TOKENOMICS.length - 1 ? "max-sm:col-span-2" : ""}`}
+              data-fx="rise"
+              data-fx-delay={(i % 4) * 0.06}
+            >
+              {vault ? <Vault>{body}</Vault> : body}
             </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </section>

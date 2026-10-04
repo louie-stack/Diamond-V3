@@ -157,15 +157,6 @@ export default function Motion() {
         });
       });
 
-      // the interrogation lamp follows the pointer
-      const spot = document.querySelector<HTMLElement>("[data-spot]");
-      if (spot && matchMedia("(pointer: fine)").matches) {
-        spot.addEventListener("pointermove", (e) => {
-          const r = spot.getBoundingClientRect();
-          spot.style.setProperty("--mx", `${((e.clientX - r.left) / r.width) * 100}%`);
-          spot.style.setProperty("--my", `${((e.clientY - r.top) / r.height) * 100}%`);
-        });
-      }
     });
 
     return () => {

@@ -710,3 +710,198 @@ img { max-width: 100%; }
   /* the rain window: a tall portrait pane on phones, so the street has room */
   .rain-window { height: min(calc(100svh - 120px), 540px); }
 }
+
+/* ---------- the interrogation lamp ---------- */
+html.no-select, html.no-select * { user-select: none; -webkit-user-select: none; }
+.lamp { position: absolute; top: 0; left: 50%; z-index: 2; width: 80px; height: 0; margin-left: -40px; transform-origin: 50% 0; transform: rotate(var(--swing, 0rad)); pointer-events: none; }
+.lamp__cord { position: absolute; left: 50%; top: 0; width: 1.5px; height: 66px; margin-left: -0.75px; background: linear-gradient(#000, #34342e); }
+.lamp__shade { position: absolute; left: 0; top: 64px; width: 80px; height: 44px; pointer-events: auto; cursor: grab; touch-action: none; }
+.lamp__shade::before { content: ""; position: absolute; inset: -16px -14px -24px; }
+.lamp.is-held .lamp__shade { cursor: grabbing; }
+.lamp__svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; filter: drop-shadow(0 6px 10px rgba(0,0,0,0.6)); }
+.lamp__bulb { position: absolute; left: 50%; top: 38px; width: 30px; height: 9px; margin-left: -15px; border-radius: 0 0 50% 50% / 0 0 100% 100%; background: radial-gradient(ellipse at 50% 0%, #fffaf0, #ffe7b0 60%, #e8c27a); box-shadow: 0 2px 16px 5px rgba(255,234,186,0.5), 0 6px 60px 22px rgba(255,234,186,0.16); }
+.lamp__beam {
+  position: absolute; left: 50%; top: 104px; width: 1700px; height: 1250px; margin-left: -850px; pointer-events: none; mix-blend-mode: screen;
+  background: radial-gradient(ellipse 46% 100% at 50% 0%, rgba(255,240,206,0.13), rgba(255,240,206,0.045) 48%, transparent 78%);
+  -webkit-mask: conic-gradient(from 146deg at 50% 0%, transparent 0deg, #000 16deg, #000 52deg, transparent 68deg);
+  mask: conic-gradient(from 146deg at 50% 0%, transparent 0deg, #000 16deg, #000 52deg, transparent 68deg);
+}
+.lamp.is-flicker .lamp__bulb, .lamp.is-flicker .lamp__beam { animation: lamp-flicker 0.7s steps(1) both; }
+@keyframes lamp-flicker { 0% { opacity: 1; } 12% { opacity: 0.15; } 22% { opacity: 1; } 34% { opacity: 0.3; } 40% { opacity: 1; } 62% { opacity: 0.55; } 70% { opacity: 1; } }
+@media (max-width: 767px) { .lamp { scale: 0.78; } }
+
+/* ---------- the evidence locker dial ---------- */
+.vault-cell { --pad: 32px; perspective: 1100px; }
+@media (max-width: 639px) { .vault-cell { --pad: 20px; } }
+.vault__door {
+  position: relative; display: flex; flex-direction: column; justify-content: space-between; flex: 1;
+  margin: calc(var(--pad) * -1); padding: var(--pad); transform-origin: 0 50%; z-index: 1;
+  transition: transform 0.95s cubic-bezier(.3,1.25,.4,1), background-color 0.2s, box-shadow 0.4s;
+}
+.vault__door.is-open {
+  transform: rotateY(-104deg); pointer-events: none; background-color: #23241e;
+  /* the back of a safe door: brushed steel, a ring of bolts */
+  background-image:
+    radial-gradient(circle at 14% 18%, #6b6c62 0 4px, #2a2b25 5px, transparent 6px),
+    radial-gradient(circle at 86% 18%, #6b6c62 0 4px, #2a2b25 5px, transparent 6px),
+    radial-gradient(circle at 14% 82%, #6b6c62 0 4px, #2a2b25 5px, transparent 6px),
+    radial-gradient(circle at 86% 82%, #6b6c62 0 4px, #2a2b25 5px, transparent 6px),
+    repeating-linear-gradient(90deg, rgba(255,255,255,0.025) 0 1px, transparent 1px 3px),
+    linear-gradient(100deg, #2c2d26, #191a15 60%, #24251f);
+  box-shadow: inset 0 0 0 6px #15160f, inset 0 0 0 7px rgba(255,255,255,0.06), 22px 0 40px rgba(0,0,0,0.55);
+}
+.vault__door > * { transition: opacity 0.2s 0.5s; }
+.vault__door.is-open > * { opacity: 0; transition: opacity 0.12s; }
+.vault__inside { position: absolute; inset: 0; z-index: 0; overflow: hidden; cursor: pointer; visibility: hidden; background: #070706; }
+.vault__inside.is-open { visibility: visible; }
+/* the box: five steel planes meeting at a back wall inset 18% / 22%, so it reads as depth */
+.vault__wall { position: absolute; inset: 0; }
+.vault__wall--back {
+  inset: 22% 18% 18% 18%;
+  background: radial-gradient(90% 80% at 50% 0%, #34352d, #1b1c17 70%), #1b1c17;
+  box-shadow: inset 0 0 30px rgba(0,0,0,0.7);
+}
+.vault__wall--back::after { content: ""; position: absolute; inset: 0; background: repeating-linear-gradient(90deg, rgba(255,255,255,0.025) 0 1px, transparent 1px 4px); }
+.vault__wall--top { clip-path: polygon(0 0, 100% 0, 82% 22%, 18% 22%); background: linear-gradient(180deg, #0c0c0a, #23241e); }
+.vault__wall--floor { clip-path: polygon(18% 82%, 82% 82%, 100% 100%, 0 100%); background: linear-gradient(180deg, #2c2d26, #121310); }
+.vault__wall--left { clip-path: polygon(0 0, 18% 22%, 18% 82%, 0 100%); background: linear-gradient(90deg, #0e0f0c, #262721); }
+.vault__wall--right { clip-path: polygon(100% 0, 82% 22%, 82% 82%, 100% 100%); background: linear-gradient(270deg, #0b0c09, #20211c); }
+/* rivets on the side walls */
+.vault__wall--left::after, .vault__wall--right::after { content: ""; position: absolute; top: 30%; bottom: 30%; width: 4px; background: radial-gradient(circle, #77786c 0 1.5px, transparent 2px) 0 0 / 4px 26px repeat-y; opacity: 0.6; }
+.vault__wall--left::after { left: 8%; }
+.vault__wall--right::after { right: 8%; }
+.vault__light { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(40% 50% at 50% 26%, rgba(255,236,190,0.22), transparent 70%), radial-gradient(34% 18% at 50% 86%, rgba(255,236,190,0.12), transparent 70%); mix-blend-mode: screen; }
+/* the letter (cut from his painting), lying on the floor under the lamp */
+.vault__letter {
+  position: absolute; left: 50%; top: 92%; width: 54%; max-width: 172px; aspect-ratio: 527 / 221; padding: 0; border: 0; background: none; cursor: pointer;
+  translate: -50% -100%; transition: scale 0.35s cubic-bezier(.3,1.5,.5,1), filter 0.35s ease, opacity 0.3s;
+}
+.vault__letter img { position: relative; display: block; width: 100%; height: 100%; }
+.vault__letter:hover { scale: 1.05; filter: brightness(1.12) drop-shadow(0 0 10px rgba(255,200,120,0.3)); }
+.vault__letter.is-gone { opacity: 0; pointer-events: none; }
+.vault__shadow { position: absolute; left: 2%; right: 0; top: 30%; bottom: -6%; background: rgba(0,0,0,0.6); filter: blur(7px); }
+.vault__inside.is-open .vault__letter { animation: letter-drop 0.9s 0.25s both cubic-bezier(.3,1.3,.5,1); }
+@keyframes letter-drop { from { translate: -50% -130%; opacity: 0; } to { translate: -50% -100%; opacity: 1; } }
+
+/* ---------- the founder's letter ---------- */
+.letter { position: fixed; inset: 0; z-index: 90; display: grid; place-items: center; padding: 24px 16px 72px; }
+.letter__veil { position: absolute; inset: 0; background: rgba(5,5,4,0.82); backdrop-filter: blur(6px); cursor: pointer; }
+.letter__sheet {
+  position: relative; width: min(100%, 680px); max-height: calc(100svh - 110px); overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain;
+  background: #ece2c8; color: #1b1712; box-shadow: 0 40px 80px rgba(0,0,0,0.6);
+}
+.letter__crumple { position: absolute; inset: 0; width: 100%; height: 100%; mix-blend-mode: multiply; opacity: 0.35; pointer-events: none; }
+/* the creases of a letter folded in three */
+.letter__body::before, .letter__body::after { content: ""; position: absolute; left: 0; right: 0; height: 10px; pointer-events: none; mix-blend-mode: multiply;
+  background: linear-gradient(180deg, rgba(120,100,60,0) 0%, rgba(120,100,60,0.22) 45%, rgba(60,45,20,0.35) 50%, rgba(255,255,255,0.5) 56%, rgba(255,255,255,0) 100%); }
+.letter__body::before { top: 33.3%; }
+.letter__body::after { top: 66.6%; }
+.letter__stain { position: absolute; left: 9%; bottom: 14%; width: 130px; height: 130px; border-radius: 50%; pointer-events: none; background: radial-gradient(circle, transparent 56%, rgba(120,75,25,0.2) 61%, rgba(120,75,25,0.06) 68%, transparent 72%); rotate: -30deg; }
+.letter__body { position: relative; padding: 32px clamp(24px, 5vw, 50px) 26px; font-size: clamp(19px, 1.5vw, 21px); line-height: 1.16; }
+.letter__body > p + p { margin-top: 0.6em; }
+@media (max-height: 820px) and (min-width: 768px) { .letter__body { font-size: 18px; } }
+.letter__case { font-size: 0.75em; opacity: 0.55; rotate: -1deg; letter-spacing: 0.02em; }
+.letter__open { margin-top: 0.4em; font-size: 1.32em; line-height: 1.05; rotate: -1.5deg; }
+.letter__big { font-size: 1.28em; font-weight: 700; rotate: 0.8deg; }
+.letter__body s { text-decoration-thickness: 2px; text-decoration-color: rgba(27,23,18,0.85); opacity: 0.7; }
+.letter__body u { text-decoration-style: wavy; text-decoration-thickness: 1.5px; text-underline-offset: 4px; }
+.letter__ring { position: relative; white-space: nowrap; }
+.letter__ring { margin-left: 0.25em; }
+.letter__ring::after { content: ""; position: absolute; inset: -5px -10px -3px -9px; border: 2px solid #b8321f; border-radius: 52% 48% 55% 45% / 60% 50% 55% 45%; rotate: -3deg; }
+.letter__hl { background: linear-gradient(transparent 45%, rgba(198,245,0,0.7) 45%, rgba(198,245,0,0.7) 88%, transparent 88%); padding: 0 3px; }
+.letter__under { font-weight: 700; background: linear-gradient(#1b1712, #1b1712) 0 100% / 100% 2px no-repeat; padding-bottom: 2px; }
+.letter__sign { margin-top: 0.7em; display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; }
+.letter__name { font-size: 1.2em; rotate: -4deg; }
+.letter__ps { margin-top: 0.5em; font-size: 0.78em; opacity: 0.7; max-width: 300px; }
+.letter__scrawl { flex: none; width: 92px; height: 92px; rotate: 9deg; }
+.letter__close {
+  position: absolute; left: 50%; bottom: 20px; translate: -50% 0; border: 1px solid rgba(236,230,214,0.25); background: rgba(0,0,0,0.4); color: var(--bone, #ece6d6);
+  padding: 9px 16px; font-family: var(--font-mono), monospace; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; cursor: pointer;
+}
+.letter__close:hover { border-color: var(--lime); color: var(--lime); }
+.vault__lock { position: absolute; right: var(--pad); bottom: var(--pad); display: flex; flex-direction: column; align-items: flex-end; gap: 8px; opacity: 0.4; transition: opacity 0.4s; }
+.vault-cell:hover .vault__lock, .vault__lock:focus-within { opacity: 0.95; }
+.vault__read { display: flex; gap: 3px; font-size: 10px; letter-spacing: 0.1em; }
+.vault__read span { width: 1ch; text-align: center; }
+.vault__read .is-live { animation: caret-blink 1s steps(1) infinite; }
+@keyframes caret-blink { 50% { opacity: 0.25; } }
+.vault__lock.is-wrong .vault__read { color: var(--red); animation: vault-shake 0.4s; }
+@keyframes vault-shake { 25% { translate: -3px 0; } 75% { translate: 3px 0; } }
+.vault__dial {
+  position: relative; width: 38px; height: 38px; padding: 0; border: 0; border-radius: 50%; cursor: grab; touch-action: none;
+  background: repeating-conic-gradient(from 0deg, rgba(128,128,120,0.9) 0 4deg, rgba(40,40,36,0.9) 4deg 8deg);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+}
+.vault__dial::before { content: ""; position: absolute; left: 50%; top: -6px; width: 0; height: 0; margin-left: -3px; border: 3px solid transparent; border-top: 4px solid currentColor; }
+.vault__dial::after { content: ""; position: absolute; inset: -14px; }
+.vault__face {
+  position: absolute; inset: 4px; border-radius: 50%; transform: rotate(var(--rot, 0deg));
+  background:
+    linear-gradient(currentColor, currentColor) 50% 2px / 1.5px 6px no-repeat,
+    repeating-conic-gradient(from -1deg, rgba(220,220,205,0.55) 0 2deg, transparent 2deg 36deg),
+    radial-gradient(circle, #2a2b25 0 55%, #15160f 100%);
+  -webkit-mask: radial-gradient(circle, #000 62%, #000 62%); color: var(--lime);
+}
+.vault-cell:hover .vault__face { color: var(--ink); }
+.vault__dial.is-resetting .vault__face { transition: transform 0.55s cubic-bezier(.3,1.3,.5,1); }
+
+/* ---------- the pinned exhibit ---------- */
+.pinned { position: relative; display: flex; }
+.pinned__card { position: relative; z-index: 1; display: flex; flex: 1; transform-origin: 22px 22px; }
+.pinned__card > article { flex: 1; }
+.pinned__card.is-down { cursor: pointer; }
+.pinned__card.is-down > article { background: var(--night-3); box-shadow: 0 30px 60px rgba(0,0,0,0.55); }
+.pinned__note { position: absolute; inset: 0; cursor: pointer; visibility: hidden; outline: 1px dashed rgba(236,230,214,0.16); outline-offset: -10px; }
+.pinned.is-down .pinned__note { visibility: visible; }
+.pinned__paper { position: absolute; top: 12px; right: 10px; width: 196px; background: #ecd96e; color: #17150f; padding: 12px 14px 10px; rotate: 3deg; box-shadow: 0 12px 22px rgba(0,0,0,0.5); background-image: linear-gradient(180deg, rgba(255,255,255,0.12), transparent 30%, rgba(0,0,0,0.06)); }
+.pinned__hand { font-size: 19px; line-height: 1.12; rotate: -2deg; }
+.pinned__scrawl { display: block; width: 62px; height: 62px; margin: 4px 0 0 auto; rotate: 6deg; }
+.pushpin {
+  /* plain steel tacks, meant to be missed */
+  position: absolute; top: 15px; z-index: 3; width: 7px; height: 7px; padding: 0; border: 0; border-radius: 50%; opacity: 0.7;
+  background: radial-gradient(circle at 35% 30%, #9a988c, #55544c 55%, #2a2924); box-shadow: 0.5px 1.5px 1.5px rgba(0,0,0,0.6);
+}
+.pushpin--l { left: 18px; }
+.pushpin--r { right: 18px; cursor: pointer; transition: opacity 0.3s; }
+.pushpin--r::before { content: ""; position: absolute; inset: -14px; }
+.pushpin--r:hover { opacity: 1; }
+
+/* ---------- the match (newspaper easter egg) ---------- */
+.burn { position: relative; }
+.burn__sheet { position: relative; z-index: 1; max-width: 1120px; margin: 0 auto; }
+.burn__gl { position: absolute; pointer-events: none; z-index: 3; }
+.burn__fx { position: absolute; left: -6vw; right: -6vw; top: -160px; bottom: -160px; width: calc(100% + 12vw); height: calc(100% + 320px); pointer-events: none; z-index: 4; mix-blend-mode: screen; }
+.burn__wall { position: absolute; inset: 0; z-index: 0; display: grid; place-items: center; pointer-events: none; visibility: hidden; }
+.burn__wall.is-on { visibility: visible; }
+.burn__wall canvas { grid-area: 1 / 1; width: min(96%, 1080px); height: auto; }
+
+.match {
+  position: absolute; right: -34px; bottom: -14px; z-index: -1; width: 78px; height: 6px; padding: 0; border: 0; border-radius: 2px; cursor: pointer;
+  background: linear-gradient(180deg, #e9cf9c, #c9a46a 60%, #a8834d);
+  transform-origin: calc(100% - 5px) 50%; rotate: 0deg; transform: rotate(23deg);
+  box-shadow: 0 2px 3px rgba(0,0,0,0.5);
+  transition: filter 0.3s;
+}
+.match::after { content: ""; position: absolute; right: -4px; top: 50%; width: 13px; height: 10px; translate: 0 -50%; border-radius: 50% 60% 60% 50%; background: radial-gradient(circle at 60% 35%, #b5482f, #7a1f12 55%, #4d130b); box-shadow: 0 1px 2px rgba(0,0,0,0.5); }
+.match::before { content: ""; position: absolute; inset: -14px -10px; }
+.match:hover { filter: brightness(1.18); }
+.match:hover::after { background: radial-gradient(circle at 60% 30%, #e0785a, #8f2715 55%, #4d130b); }
+.match.is-up { z-index: 6; }
+.match.is-lit::after { background: radial-gradient(circle at 50% 50%, #3a1a0f, #1a0d07); }
+.match__flame {
+  position: absolute; left: calc(100% - 12px); bottom: 50%; width: 14px; height: 30px; transform-origin: 50% 100%; pointer-events: none;
+  border-radius: 50% 50% 45% 45% / 65% 65% 35% 35%; opacity: 0; scale: 0.2;
+  background: radial-gradient(ellipse at 50% 75%, #fffbe6 0 18%, #ffd25a 32%, #ff8a1e 58%, rgba(255,80,10,0) 72%);
+  filter: blur(0.4px) drop-shadow(0 0 8px rgba(255,140,40,0.9));
+  transition: opacity 0.15s, scale 0.25s cubic-bezier(.2,1.6,.4,1);
+}
+.match.is-lit .match__flame { opacity: 1; scale: 1; animation: flame 0.13s infinite alternate; }
+@keyframes flame { from { transform: scaleY(1) skewX(-3deg); } to { transform: scaleY(1.12) skewX(3deg); } }
+.match__spark { position: absolute; z-index: 7; width: 3px; height: 3px; border-radius: 50%; background: #ffd27a; box-shadow: 0 0 6px #ff9a30; pointer-events: none; animation: spark 0.5s ease-out forwards; }
+@keyframes spark { to { translate: var(--dx) var(--dy); opacity: 0; scale: 0.3; } }
+@media (max-width: 767px) {
+  /* phones: the sheet fills the width, so the match peeks out under its bottom edge instead */
+  .match { right: 22px; bottom: -20px; transform: rotate(68deg); }
+  .burn__wall canvas { width: 100%; }
+  .match::before { inset: -22px -16px; }
+}
