@@ -179,7 +179,9 @@ export default function BurnPaper({ children }: { children: ReactNode }) {
       }
       sfx.crackle(DUR + 0.4);
       tl = gsap.timeline();
-      tl.to(prog, { f: end, duration: DUR, ease: "power1.in" });
+      // GSAP rounds tweened values, so prog.f can stop a hair short of end: track completion instead
+      let spent = false;
+      tl.to(prog, { f: end, duration: DUR, ease: "power1.in", onComplete: () => { spent = true; } });
 
       if (!fire) {
         // no WebGL2: the page simply chars and fades
@@ -263,17 +265,14 @@ export default function BurnPaper({ children }: { children: ReactNode }) {
           }
         }
 
-        if (F < end || sparks.length) raf = requestAnimationFrame(frame);
-        else {
+        // the page is gone once the front has passed; the last sparks can still drift, but leaving now pins a fresh copy
+        if (spent && phase === "lit") {
           phase = "burnt";
           art.style.visibility = "hidden";
           dropFire();
-          if (!visible) reset();
+          if (!visible) return reset();
         }
-        if (F >= end && art.style.visibility !== "hidden") {
-          art.style.visibility = "hidden";
-          dropFire();
-        }
+        if (!spent || sparks.length) raf = requestAnimationFrame(frame);
       };
       raf = requestAnimationFrame(frame);
     };
