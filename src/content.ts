@@ -98,11 +98,10 @@ export const TOKENOMICS = [
 export const MEMES = [
   { src: "/art/briefcase.webp", cap: "Exhibit 01. The bag." },
   { src: "/art/boxing.webp", cap: "Exhibit 02. Rekt bears." },
-  { src: "/art/matrix.webp", cap: "Exhibit 03. Dodge every sell." },
-  { src: "/art/vader.webp", cap: "Exhibit 04. Sell, you will not." },
-  { src: "/art/aristocrat.webp", cap: "Exhibit 05. Old money. New hands." },
-  { src: "/art/fiat.webp", cap: "Exhibit 06. Fiat. Burned." },
-  { src: "/art/precious.webp", cap: "Exhibit 07. My precious bag." },
-  { src: "/art/gaming.webp", cap: "Exhibit 08. Mining diamonds." },
-  { src: "/art/say-sell-again.webp", cap: "Exhibit 09. Say sell again." },
+  { src: "/art/vader.webp", cap: "Exhibit 03. Sell, you will not." },
+  { src: "/art/aristocrat.webp", cap: "Exhibit 04. Old money. New hands." },
+  { src: "/art/fiat.webp", cap: "Exhibit 05. Fiat. Burned." },
+  { src: "/art/precious.webp", cap: "Exhibit 06. My precious bag." },
+  { src: "/art/gaming.webp", cap: "Exhibit 07. Mining diamonds." },
+  { src: "/art/say-sell-again.webp", cap: "Exhibit 08. Say sell again." },
 ];

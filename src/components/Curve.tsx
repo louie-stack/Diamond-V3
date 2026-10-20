@@ -3,111 +3,110 @@
 import { useEffect, useRef } from "react";
 import { sfx } from "@/lib/sfx";
 import SecHead from "./SecHead";
-
-/* chart space, in a stretched 1000 x 1000 box: x = protocol day (0 to 112), y = max outbound % */
-const LAST = 112;
-const X = (d: number) => (d / LAST) * 1000;
-const Y = (p: number) => 1000 - p * 10;
-const STAIR = (() => {
-  let d = `M 0 ${Y(0)}`;
-  for (let i = 1; i <= 100; i++) d += ` V ${Y(i)} H ${X(i).toFixed(2)}`;
-  return d;
-})();
-const AXIS = [1, 25, 50, 75, 100];
-const FINAL = 101;
-
-/** the milestones from the overview; each is a stop on the timeline and a beat in the caption */
-const STOPS = [
-  { day: 1, chip: "1%", head: "Day 1. The chart is newborn.", sub: "Every wallet can move 1% of its bag. Not one token more. This is when a whale would strike, so this is when the rules are strongest." },
-  { day: 2, chip: "2%", head: "Day 2. 2%.", sub: "One point a day, the same for every holder. No VIP wallets, no exemptions." },
-  { day: 3, chip: "3%", head: "Day 3. 3%.", sub: "Each wallet runs its own 24-hour clock, so nobody unlocks at the same moment. Selling pressure stays staggered." },
-  { day: 25, chip: "25%", head: "Day 25. A quarter of the way out.", sub: "Holders have been free to sell since Day 1. What nobody could do was empty a giant bag into everyone else." },
-  { day: 50, chip: "50%", head: "Day 50. Halfway.", sub: "Liquidity deeper, holders spread out, a chart that grew up under protection. The limit keeps stepping back." },
-  { day: 75, chip: "75%", head: "Day 75. The cuffs are loosening.", sub: "Protection when it matters most. Freedom when it doesn't." },
-  { day: 100, chip: "100%", head: "Day 100. 100%.", sub: "The curve is complete. Every normal holder can move their whole bag." },
-  { day: FINAL, chip: "Free", head: "Anti-jeet early. Free market over time.", sub: "$DIAMOND protects its early market, then gets out of the way. No adjustable curve. No insider exemption. No hidden switch." },
-];
-
-/* the reel: [seconds, day]. It glides between stops and holds on each long enough to read. */
-const REEL: [number, number][] = [
-  [0, 1], [3.2, 1], [3.6, 2], [6.0, 2], [6.4, 3], [9.4, 3], [12.2, 25], [15.6, 25],
-  [18.2, 50], [21.6, 50], [24.2, 75], [27.2, 75], [29.8, 100], [32.6, 100], [32.6, FINAL], [38, FINAL],
-];
-const LOOP = REEL[REEL.length - 1][0];
-const dayAt = (t: number) => {
-  for (let i = 1; i < REEL.length; i++) {
-    const [t1, d1] = REEL[i];
-    const [t0, d0] = REEL[i - 1];
-    if (t <= t1) return t1 === t0 ? d1 : d0 + ((d1 - d0) * (t - t0)) / (t1 - t0);
-  }
-  return FINAL;
-};
-/** where the reel first reaches a day, so it can pick up from wherever you left it */
-const timeOf = (d: number) => {
-  for (let i = 1; i < REEL.length; i++) {
-    const [t1, d1] = REEL[i];
-    const [t0, d0] = REEL[i - 1];
-    if (d <= d1 && d1 > d0) return t0 + ((t1 - t0) * Math.max(0, d - d0)) / (d1 - d0);
-  }
-  return 0;
-};
-
-const WHALE = 50_000_000; // 5% of supply
-const fmt = (n: number) => n.toLocaleString("en-US");
+import type { Vault } from "./vault3d";
 
 /**
- * Chapter one: the 100-day curve, as a self-playing reel. It runs on its own
- * clock while on screen; hover or drag the chart to scrub, or pick a stop.
- * JS writes the day into CSS vars and a few text nodes, the visuals are CSS.
+ * Chapter one: the 100-day curve, explained with your own bag. The bag is 100
+ * diamonds in a vault; on Day N, N of them are free to move and the rest stay
+ * locked, filling from the bottom up like a rising level. One sentence says the
+ * same thing in words, and the curve underneath is the timeline you drag. It
+ * plays on its own: one point a day, a hold at Day 100, then the vault relocks.
+ * JS writes the day into CSS vars, a few text nodes and is-on classes.
  */
+
+const BEATS = [
+  { from: 1, head: "Day 1 is the strictest day.", sub: "This is when a whale would strike, so this is when the rules are strongest. Selling is still allowed. Dumping everything is not." },
+  { from: 10, head: "One more point, every day.", sub: "The same for every holder. No VIP wallets, no exemptions. Each wallet runs its own 24-hour clock, so nobody unlocks at the same moment." },
+  { from: 25, head: "A quarter of the way out.", sub: "Holders have been free to sell since Day 1. What nobody could do was empty a giant bag into everyone else." },
+  { from: 50, head: "Halfway.", sub: "Liquidity deeper, holders spread out, a chart that grew up under protection. The limit keeps stepping back." },
+  { from: 75, head: "The cuffs are loosening.", sub: "Protection when it matters most. Freedom when it doesn't." },
+  { from: 100, head: "Then it gets out of the way.", sub: "From Day 100 every holder can move their whole bag. No adjustable curve. No insider exemption. No hidden switch." },
+];
+
+/* the run: one straight climb, a hold on the open vault, then it relocks */
+const DRAW = 25;
+const HOLD = 5;
+const DOWN = 1.2;
+const LOOP = DRAW + HOLD + DOWN;
+const FINAL = 101;
+const dayAt = (t: number) => (t < DRAW ? 1 + (99 * t) / DRAW : t < DRAW + HOLD ? FINAL : 100 - (99 * (t - DRAW - HOLD)) / DOWN);
+const timeOf = (d: number) => (d > 100 ? DRAW : ((d - 1) / 99) * DRAW);
+
+/* the vault fills from the bottom row up, left to right: cell i opens on day i + 1 */
+const CELLS = Array.from({ length: 100 }, (_, i) => ({ i, row: 9 - Math.floor(i / 10), col: i % 10 }));
+
 export default function Curve() {
   const root = useRef<HTMLElement>(null);
   const stage = useRef<HTMLDivElement>(null);
-  const chart = useRef<HTMLDivElement>(null);
-  const reveal = useRef<SVGRectElement>(null);
+  const scrub = useRef<HTMLDivElement>(null);
   const dayEl = useRef<HTMLSpanElement>(null);
-  const sellEl = useRef<HTMLElement>(null);
-  const protEl = useRef<HTMLElement>(null);
-  const whaleEl = useRef<HTMLSpanElement>(null);
+  const nEl = useRef<HTMLSpanElement>(null);
+  const sellEl = useRef<HTMLSpanElement>(null);
+  const protEl = useRef<HTMLSpanElement>(null);
+  const freeEl = useRef<HTMLSpanElement>(null);
+  const lockEl = useRef<HTMLSpanElement>(null);
+  const nextEl = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
-    const st = stage.current;
-    const ch = chart.current;
-    if (!st || !ch) return;
+    const st = stage.current, sc = scrub.current;
+    if (!st || !sc) return;
     const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    let raf = 0;
-    let t = 0;
-    let last = 0;
-    let visible = false;
-    let held = false; // the viewer has the wheel
-    let resume = 0;
-    let lastDay = -1;
-    let stop = -1;
+    const gems = Array.from(st.querySelectorAll<HTMLElement>(".vx__gem"));
+    const beats = Array.from(st.querySelectorAll<HTMLElement>(".vx__beat"));
+    const ticks = Array.from(st.querySelectorAll<HTMLElement>(".bt-scrub__t"));
+    let raf = 0, t = 0, last = 0, visible = false, held = false, resume = 0;
+    let lastDay = -1, beat = -1;
+    // the 3D case, once it loads; the flat grid stands in until then (or for good, without WebGL)
+    let vault: Vault | null = null, gone = false;
+    const host = st.querySelector<HTMLElement>(".vx__grid")!;
+    import("./vault3d").then((m) => {
+      if (gone) return;
+      vault = m.createVault(host);
+      if (!vault) return;
+      st.dataset.gl = "1";
+      const p = Math.min(100, Math.max(1, lastDay));
+      vault.set(p, lastDay > 100, false, false);
+    });
 
-    const show = (d: number) => {
+    const show = (d: number, down = false) => {
       const final = d > 100.5;
+      const dc = final ? 100 : Math.min(100, Math.max(1, d));
       const day = final ? FINAL : Math.max(1, Math.floor(d + 1e-6));
-      const hx = final ? 106 : Math.min(100, Math.max(1, d));
-      st.style.setProperty("--x", (X(hx) / 1000).toFixed(4));
-      st.style.setProperty("--y", (Math.min(100, day) / 100).toFixed(4));
-      reveal.current?.setAttribute("width", X(Math.min(100, hx)).toFixed(1));
-      if (day !== lastDay) {
-        const fwd = day > lastDay && lastDay !== -1;
-        lastDay = day;
-        const pct = Math.min(100, day);
-        if (dayEl.current) dayEl.current.textContent = final ? "100+" : String(day).padStart(3, "0");
-        if (sellEl.current) sellEl.current.textContent = final ? "All" : `${pct}%`;
-        if (protEl.current) protEl.current.textContent = final ? "None" : `${100 - pct}%`;
-        if (whaleEl.current) whaleEl.current.textContent = final ? "The whole bag" : `${fmt((WHALE * pct) / 100)} $DIAMOND`;
-        st.dataset.final = final ? "1" : "0";
-        st.dataset.side = hx > 70 ? "l" : "r";
-        if (fwd && !held && day === FINAL) sfx.ching();
+      const p = Math.min(100, day);
+      st.style.setProperty("--x", ((dc - 1) / 99).toFixed(4));
+      st.dataset.down = down ? "1" : "0";
+      if (day === lastDay) return;
+      const fwd = day > lastDay && lastDay !== -1;
+      lastDay = day;
+      st.style.setProperty("--p", `${p}%`);
+      st.style.setProperty("--pf", (p / 100).toFixed(2));
+      if (dayEl.current) dayEl.current.textContent = final ? "100+" : String(day).padStart(3, "0");
+      if (nEl.current) nEl.current.textContent = String(p);
+      if (sellEl.current) sellEl.current.textContent = final ? "All" : `${p}%`;
+      if (protEl.current) protEl.current.textContent = final ? "None" : `${100 - p}%`;
+      if (freeEl.current) freeEl.current.textContent = String(p);
+      if (lockEl.current) lockEl.current.textContent = String(100 - p);
+      if (nextEl.current) nextEl.current.textContent = final ? "Anytime" : "24h later";
+      gems.forEach((g, i) => {
+        const on = i < p;
+        if (on === g.classList.contains("is-on")) return;
+        g.classList.toggle("is-on", on);
+        // the newest one pops; on a scrub or a relock they just switch
+        g.classList.toggle("is-new", on && fwd && !held && !down);
+      });
+      ticks.forEach((k, i) => k.classList.toggle("is-on", i < p));
+      vault?.set(p, final, down, fwd && !held && !down);
+      const was = st.dataset.final === "1";
+      st.dataset.final = final ? "1" : "0";
+      if (!held && !down) {
+        if (fwd && !final) sfx.tick();
+        if (final && !was) sfx.ching();
       }
       let s = 0;
-      STOPS.forEach((x, i) => { if (day >= x.day) s = i; });
-      if (s !== stop) {
-        stop = s;
-        st.dataset.stop = String(s);
+      BEATS.forEach((b, i) => { if (day >= b.from) s = i; });
+      if (s !== beat) {
+        beat = s;
+        beats.forEach((b, i) => b.classList.toggle("is-on", i === s));
       }
     };
 
@@ -117,160 +116,143 @@ export default function Curve() {
       last = now;
       if (!held) {
         t = (t + dt) % LOOP;
-        show(dayAt(t));
+        show(dayAt(t), t > DRAW + HOLD);
       }
-      if (visible && !held) raf = requestAnimationFrame(frame);
+      if (visible) raf = requestAnimationFrame(frame);
     };
     const play = () => {
-      if (still || raf || held || !visible) return;
+      if (raf || !visible || still) return;
       last = performance.now();
       raf = requestAnimationFrame(frame);
     };
     const take = (d: number) => {
       held = true;
+      st.dataset.held = "1";
       clearTimeout(resume);
-      cancelAnimationFrame(raf);
-      raf = 0;
       t = timeOf(d);
       show(d);
     };
-    const release = (after: number) => {
+    const release = () => {
       clearTimeout(resume);
-      resume = window.setTimeout(() => {
-        held = false;
-        play();
-      }, after);
+      resume = window.setTimeout(() => { held = false; st.dataset.held = "0"; }, 1800);
     };
 
-    // scrub: the pointer's x on the chart is the day
-    const dayFromPointer = (e: PointerEvent) => {
-      const r = ch.getBoundingClientRect();
-      const d = ((e.clientX - r.left) / r.width) * LAST;
-      return d > 101 ? FINAL : Math.min(100, Math.max(1, d));
+    // drag the curve: the pointer is the day
+    const at = (e: PointerEvent) => {
+      const r = sc.getBoundingClientRect();
+      const f = (e.clientX - r.left) / r.width;
+      return f > 1.005 ? FINAL : 1 + Math.min(1, Math.max(0, f)) * 99;
     };
-    const onMove = (e: PointerEvent) => take(dayFromPointer(e));
-    const onLeave = () => release(1400);
-    ch.addEventListener("pointermove", onMove);
-    ch.addEventListener("pointerdown", onMove);
-    ch.addEventListener("pointerleave", onLeave);
-    ch.addEventListener("pointerup", onLeave);
+    const onMove = (e: PointerEvent) => take(at(e));
+    sc.addEventListener("pointermove", onMove);
+    sc.addEventListener("pointerdown", onMove);
+    sc.addEventListener("pointerleave", release);
+    sc.addEventListener("pointerup", release);
 
-    // the stops along the bottom
-    const chips = Array.from(st.querySelectorAll<HTMLButtonElement>(".cv-stop"));
-    const onChip = (e: Event) => {
-      const d = Number((e.currentTarget as HTMLElement).dataset.day);
-      take(d);
-      sfx.tick();
-      release(4200);
-    };
-    chips.forEach((c) => c.addEventListener("click", onChip));
-
-    // only spend frames while the reel is on screen
     const io = new IntersectionObserver(([e]) => {
       visible = e.isIntersecting;
       if (visible) play();
     }, { threshold: 0.15 });
     io.observe(root.current!);
 
-    show(1);
+    show(still ? 37 : 1);
     return () => {
+      gone = true;
+      vault?.dispose();
       io.disconnect();
       cancelAnimationFrame(raf);
       clearTimeout(resume);
-      ch.removeEventListener("pointermove", onMove);
-      ch.removeEventListener("pointerdown", onMove);
-      ch.removeEventListener("pointerleave", onLeave);
-      ch.removeEventListener("pointerup", onLeave);
-      chips.forEach((c) => c.removeEventListener("click", onChip));
+      sc.removeEventListener("pointermove", onMove);
+      sc.removeEventListener("pointerdown", onMove);
+      sc.removeEventListener("pointerleave", release);
+      sc.removeEventListener("pointerup", release);
     };
   }, []);
 
   return (
-    <section ref={root} id="curve" className="sec curve scroll-mt-16 overflow-hidden" aria-label="Chapter one. The 100-day curve.">
-      <div ref={stage} className="wrap relative" data-stop="0" data-final="0" data-side="r">
+    <section ref={root} id="curve" className="sec bt-sec scroll-mt-16 overflow-hidden" aria-label="Chapter one. The 100-day curve.">
+      {/* one gem, drawn once */}
+      <svg width="0" height="0" className="absolute" aria-hidden="true">
+        <defs>
+          <linearGradient id="vx-lit" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stopColor="#f2ffb0" />
+            <stop offset="0.45" stopColor="#ccff00" />
+            <stop offset="1" stopColor="#7fa300" />
+          </linearGradient>
+          <symbol id="vx-gem" viewBox="0 0 24 22">
+            <path d="M6 1 H18 L23 7.5 L12 21 L1 7.5 Z" style={{ fill: "var(--gb)", stroke: "var(--gs)", strokeWidth: 0.8, strokeLinejoin: "round" }} />
+            <path d="M1 7.5 H23 M6 1 L8.5 7.5 L12 21 M18 1 L15.5 7.5 L12 21 M8.5 7.5 L12 1 L15.5 7.5" style={{ fill: "none", stroke: "var(--gf)", strokeWidth: 0.6, strokeLinejoin: "round" }} />
+            <path d="M6 1 L8.5 7.5 L1 7.5 Z" style={{ fill: "var(--gh)" }} />
+            <path d="M12 1 L15.5 7.5 L8.5 7.5 Z" style={{ fill: "var(--gh2)" }} />
+          </symbol>
+        </defs>
+      </svg>
+
+      <div className="wrap">
         <SecHead
           n="01"
           label="The 100-day curve"
           size="h-m"
           title={<>Protection when it matters most.<br /><span className="text-[var(--lime)]">Then it gets out of the way.</span></>}
-          aside={<>Watch it play.<br />Or drag across the chart<br />and take the wheel.</>}
+          aside={<>Your bag, 100 tokens.<br />Watch how much of it can move.<br />Drag the curve to pick a day.</>}
         />
 
-        <div className="cv-plot vf mt-14 lg:mt-16" data-fx="rise">
-          <span className="vf__b" />
-          <div className="cv-glow" aria-hidden="true" />
-
-          {/* the readout sits in the empty sky above the curve */}
-          <div className="cv-read" aria-live="polite">
-            <p className="meta cv-read__k">Protocol age</p>
-            <p className="display cv-read__day"><span className="cv-read__pre">Day</span><span ref={dayEl} className="tabular-nums">001</span></p>
-            <dl className="cv-read__row">
-              <div><dt className="meta">Sellable today</dt><dd ref={sellEl} className="display tabular-nums">1%</dd></div>
-              <div><dt className="meta">Protected</dt><dd ref={protEl} className="display tabular-nums">99%</dd></div>
-            </dl>
-          </div>
-
-          <div ref={chart} className="cv-chart" aria-hidden="true">
-            {[25, 50, 75, 100].map((p) => (
-              <span key={p} className="cv-grid" data-p={p} style={{ bottom: `${p}%` }}><span className="meta">{p}%</span></span>
-            ))}
-            <div className="cv-free"><span className="term">Free market</span></div>
-            <svg viewBox="0 0 1000 1000" preserveAspectRatio="none" className="cv-svg">
-              <defs>
-                <clipPath id="cv-past"><rect ref={reveal} x="0" y="0" width="0" height="1000" /></clipPath>
-              </defs>
-              {/* where it is going */}
-              <path d={STAIR} className="cv-ghost" vectorEffect="non-scaling-stroke" />
-              {/* where it has been */}
-              <g clipPath="url(#cv-past)">
-                <path d={`${STAIR} V 1000 Z`} className="cv-area" />
-                <path d={STAIR} className="cv-line" vectorEffect="non-scaling-stroke" />
-              </g>
-            </svg>
-
-            {/* today's column: what you can move, and what the curve still holds back */}
-            <div className="cv-col">
-              <span className="cv-prot" />
-              <span className="cv-sell" />
-              <span className="cv-tag cv-tag--prot meta">Protected</span>
-              <span className="cv-tag cv-tag--sell meta">Sellable today</span>
-            </div>
-            <span className="cv-head" />
-
-            {AXIS.map((d) => (
-              <span key={d} className="cv-tick meta" data-d={d} style={{ left: `${(X(d) / 10).toFixed(2)}%` }}>Day {d}</span>
-            ))}
-          </div>
-        </div>
-
-        {/* the stops: the overview's table, as a timeline you can click */}
-        <div className="cv-stops" data-fx="rise">
-          {STOPS.map((s, i) => (
-            <button key={s.day} type="button" className="cv-stop" data-day={s.day} data-n={i}>
-              <span className="meta">{s.day === FINAL ? "After 100" : `Day ${s.day}`}</span>
-              <span className="display">{s.chip}</span>
-            </button>
-          ))}
-        </div>
-
-        <div className="cv-band" data-fx="rise">
-          <div className="cv-beats">
-            {STOPS.map((s, i) => (
-              <div key={s.day} className="cv-beat" data-n={i}>
-                <p className="display cv-beat__head">{s.head}</p>
-                <p className="cv-beat__sub">{s.sub}</p>
-              </div>
-            ))}
-          </div>
-          <div className="cv-whale">
-            <p className="meta opacity-50">A whale holding 5% can move today</p>
-            <p className="display cv-whale__v"><span ref={whaleEl} className="tabular-nums">500,000 $DIAMOND</span></p>
-            <p className="meta cv-whale__no">
-              <span className="cv-whale__deny">Dump it all: denied</span>
-              <span className="cv-whale__ok">Move it all: allowed. The market grew up.</span>
+        <div ref={stage} className="vx mt-14 lg:mt-20" data-final="0" data-down="0" data-held="0">
+          <div className="vx__copy">
+            <p className="meta vx__k">Protocol age / Day <span ref={dayEl} className="tabular-nums text-[var(--bone)]">001</span></p>
+            <p className="display vx__line" aria-live="polite">
+              Today you can move
+              <br /><span className="vx__n"><span ref={nEl} className="tabular-nums">1</span></span> of every 100
+              <br />tokens you hold.
             </p>
+            <dl className="vx__row">
+              <div><dt className="meta">Sellable today</dt><dd className="display tabular-nums"><span ref={sellEl}>1%</span></dd></div>
+              <div><dt className="meta">Protected</dt><dd className="display tabular-nums"><span ref={protEl}>99%</span></dd></div>
+              <div><dt className="meta">Next sell</dt><dd className="display"><span ref={nextEl}>24h later</span></dd></div>
+            </dl>
+            <div className="vx__beats">
+              {BEATS.map((b, i) => (
+                <div key={b.from} className={`vx__beat ${i === 0 ? "is-on" : ""}`}>
+                  <p className="display vx__beat-h">{b.head}</p>
+                  <p className="vx__beat-s">{b.sub}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* the vault: your bag as 100 diamonds */}
+          <figure className="vx__vault" aria-hidden="true">
+            <figcaption className="vx__cap meta"><span>Your bag</span><span>100 tokens</span></figcaption>
+            <div className="vx__grid">
+              <span className="vx__level" />
+              {CELLS.map(({ i, row, col }) => (
+                <span key={i} className="vx__gem" style={{ gridRow: row + 1, gridColumn: col + 1 }}>
+                  <svg viewBox="0 0 24 22"><use href="#vx-gem" /></svg>
+                  <i className="vx__lock" />
+                </span>
+              ))}
+              <span className="vx__stamp"><span className="stamp stamp--lime">Free market</span></span>
+            </div>
+            <div className="vx__foot meta">
+              <span><b className="vx__dot vx__dot--on" /><span ref={freeEl} className="tabular-nums">1</span> free to move today</span>
+              <span><b className="vx__dot" /><span ref={lockEl} className="tabular-nums">99</span> locked</span>
+            </div>
+          </figure>
+
+          {/* the curve is the timeline: 100 bars, one a day, each 1% taller than the last; drag it */}
+          <div ref={scrub} className="bt-curve" aria-hidden="true">
+            <div className="bt-curve__bars">
+              {Array.from({ length: 100 }, (_, i) => (
+                <span key={i} className={`bt-scrub__t ${(i + 1) % 25 === 0 ? "is-key" : ""}`} style={{ height: `${i + 1}%` }} />
+              ))}
+            </div>
+            <span className="bt-scrub__head" />
+            <div className="bt-curve__lbl meta">
+              <span>Day 1 / 1%</span><span>The curve: max share of your bag per 24 hours</span><span>Day 100 / 100%</span>
+            </div>
           </div>
         </div>
+
       </div>
     </section>
   );
