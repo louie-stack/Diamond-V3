@@ -329,7 +329,7 @@ const FOOT = [
     title: "The file",
     links: [
       { label: "Teaser", href: "#teaser" },
-      { label: "The 100-day curve", href: "#rule" },
+      { label: "The 100-day curve", href: "#curve" },
       { label: "Why Diamond", href: "#why" },
       { label: "Tokenomics", href: "#tokenomics" },
     ],

@@ -24,7 +24,7 @@ export const CHECKOUT = {
 
 export const NAV = [
   { label: "Teaser", href: "#teaser" },
-  { label: "The 100-Day Curve", href: "#rule" },
+  { label: "The 100-Day Curve", href: "#curve" },
   { label: "Why Diamond", href: "#why" },
   { label: "Tokenomics", href: "#tokenomics" },
   { label: "Contract", href: "#contract" },

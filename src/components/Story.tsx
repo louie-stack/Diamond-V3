@@ -8,7 +8,7 @@ import Rip from "./Rip";
 /* ---------------------------------------------------------------- */
 /* 01. The crime, as a triptych.                                     */
 /* ---------------------------------------------------------------- */
-/* 02. The 100-day curve, as four exhibits.                          */
+/* 02. The rules, as four exhibits.                                   */
 /* ---------------------------------------------------------------- */
 const EXHIBITS = [
   {
@@ -34,7 +34,7 @@ export function EvidenceBoard() {
     <section id="rule" className="sec sec--night2 scroll-mt-16 overflow-hidden">
       <SceneBg src="/art/case/pattern.webp" tone="var(--night-2)" height="min(92vh, 900px)" opacity={0.5} position="center 30%" />
       <div className="wrap relative">
-        <SecHead n="02" label="The 100-day curve" size="h-m" title="One curve changes the game." aside="Four exhibits. One mechanism. No exceptions. Strongest when the market is youngest." />
+        <SecHead n="02" label="The rules" size="h-m" title="Four rules. No exceptions." aside="Same for every wallet. Fixed in the contract. Strongest when the market is youngest." />
 
         <div className="mt-16 grid border-l border-t border-[var(--line-d)] sm:grid-cols-2 lg:mt-24 lg:grid-cols-4">
           {EXHIBITS.map((e, i) => {

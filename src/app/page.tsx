@@ -10,7 +10,7 @@ import Sting from "@/components/Sting";
 import Checkout from "@/components/Checkout";
 import Tape from "@/components/Tape";
 import { EvidenceBoard, Wanted, Interrogation } from "@/components/Story";
-import Crime from "@/components/Crime";
+import Curve from "@/components/Curve";
 import { Declassified, Memo, Transcript, Locker, CaseClosed, Surveillance, Footer } from "@/components/Files";
 
 export default function Page() {
@@ -24,7 +24,7 @@ export default function Page() {
       <Ticker />
       <Teaser />
       <Newspaper />
-      <Crime />
+      <Curve />
       <EvidenceBoard />
       <Sting />
       <Tape tilt={-2} />
