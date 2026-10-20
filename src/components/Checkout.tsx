@@ -133,7 +133,7 @@ export default function Checkout() {
 
   const idx = STEPS.findIndex((s) => s.id === step);
   const shareText = encodeURIComponent(
-    `Just bought ${fmt(quote.out)} $DIAMOND. I can sell 1% a day. I can't jeet. Diamond hands, enforced by code.`
+    `Just bought ${fmt(quote.out)} $DIAMOND. Day 1 I can sell 1%. Day 100, all of it. I can't jeet. Diamond hands, enforced by code.`
   );
 
   if (!open) return null;
@@ -211,7 +211,7 @@ export default function Checkout() {
                     <p className="mono mt-1 text-[17px]">0%</p>
                   </div>
                   <div>
-                    <p className="meta !text-[10px] text-[var(--bone)]/50">Your daily sell limit</p>
+                    <p className="meta !text-[10px] text-[var(--bone)]/50">Day 1 sell limit</p>
                     <p className="mono mt-1 text-[17px]">{tooLow ? "0" : fmt(quote.allowance)}</p>
                   </div>
                 </div>
@@ -220,7 +220,7 @@ export default function Checkout() {
               <label className="mt-7 flex cursor-pointer items-start gap-3.5">
                 <input type="checkbox" checked={ack} onChange={(e) => setAck(e.target.checked)} className="checkout__check mt-0.5" />
                 <span className="body-s text-[var(--bone)]/80">
-                  I understand: one outbound transaction per rolling 24 hours, max 1% of my holdings.{" "}
+                  I understand: one outbound transaction per rolling 24 hours, max 1% of my holdings on Day 1, rising 1% a day until Day 100.{" "}
                   <span className="text-[var(--bone)]">I can sell. I can&apos;t jeet.</span>
                 </span>
               </label>
@@ -301,8 +301,8 @@ export default function Checkout() {
               </div>
               <div className="mt-7 border-l-2 border-[var(--lime)] bg-[var(--night)] py-4 pl-5 pr-4">
                 <p className="body-s text-[var(--bone)]/85">
-                  After this, you can move up to <span className="text-[var(--lime)]">{fmt(quote.allowance)} $DIAMOND</span> once every 24h. No
-                  exceptions. Not even for you.
+                  On Day 1, you can move up to <span className="text-[var(--lime)]">{fmt(quote.allowance)} $DIAMOND</span> once every 24h. The
+                  limit rises every day until Day 100. No exceptions. Not even for you.
                 </p>
               </div>
               <button type="button" onClick={sign} className="btn btn--lime mt-7 w-full">
@@ -366,8 +366,9 @@ export default function Checkout() {
                   ["Paid", `${amount} ${CHECKOUT.currency}`],
                   ["Wallet", addr],
                   ["Tx", tx],
-                  ["First 1% available", "Now"],
-                  ["Daily max outbound", `${fmt(quote.allowance)} $DIAMOND`],
+                  ["First outbound available", "Now"],
+                  ["Day 1 max outbound", `${fmt(quote.allowance)} $DIAMOND`],
+                  ["After Day 100", "Unrestricted"],
                 ].map(([k, v]) => (
                   <div key={k} className="flex items-baseline justify-between gap-4 border-b border-[var(--line-d)] py-3">
                     <dt className="meta !text-[10px] text-[var(--bone)]/50">{k}</dt>

@@ -89,8 +89,13 @@ export default function Letter({ from, onClose }: { from: { x: number; y: number
 
           <p>
             Not a better pitch. A <b>rule</b>. Written into the contract, out of everyone&apos;s reach. Mine included. No owner switch.
-            No whitelist. Nobody to call. <span className="letter__hl">One percent a day</span>, and the door stays shut for everyone at
-            the same time.
+            No whitelist. Nobody to call. <span className="letter__hl">One percent on day one</span>, a little more every day after, and the
+            same rule for everyone at the same time. Strongest when the chart is youngest. Gone when it&apos;s grown.
+          </p>
+
+          <p>
+            I set something aside, too. A tenth of everything, sealed where nobody can rush it. It isn&apos;t for sale. It&apos;s for whoever
+            keeps looking.
           </p>
 
           <p>

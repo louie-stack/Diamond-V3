@@ -43,7 +43,7 @@ export default function Newspaper() {
           {/* the splash */}
           <div className="relative mt-7">
             <h4 className="display paper__head">Jeeting outlawed</h4>
-            <p className="paper__deck">Smart contract caps every wallet at 1% per day. Whales furious. Everyone else: relieved.</p>
+            <p className="paper__deck">Smart contract caps every wallet at 1% on day one, then lets go a day at a time. Whales furious. Everyone else: relieved.</p>
           </div>
 
           {/* the page */}
@@ -60,13 +60,13 @@ export default function Newspaper() {
               <p className="paper__body">
                 <span className="paper__drop">I</span>n a move whales are calling &ldquo;unfair&rdquo; and everyone else is calling &ldquo;about
                 time&rdquo;, a memecoin has written diamond hands directly into its contract. Every wallet gets one successful non-zero
-                outbound transaction per rolling 24 hours, capped at 1% of its holdings. Buying is unrestricted. The first sell is
-                available immediately.
+                outbound transaction per rolling 24 hours, capped at 1% of its holdings on day one, 2% on day two, and so on until day
+                100, when the cuffs come off. Buying is unrestricted. The first sell is available immediately.
               </p>
               <blockquote className="paper__quote">&ldquo;Once live, the mechanism is the mechanism.&rdquo;</blockquote>
               <p className="paper__body">
                 Selling remains legal. Dumping does not. Asked whether the rule could be changed later, the contract declined to
-                comment, on the grounds that it has no owner switch, no whitelist and no adjustable limit. Full story, page 3.
+                comment, on the grounds that it has no owner switch, no whitelist and no adjustable curve. Full story, page 3.
                 Tokenomics, page 9.
               </p>
             </div>
@@ -75,7 +75,7 @@ export default function Newspaper() {
               <div className="paper__box">
                 <p className="meta !text-[10px]">Markets</p>
                 <dl className="mt-2 space-y-1.5">
-                  {[["Max outbound", "1%"], ["Cooldown", "24h"], ["Tax", "0%"], ["Team tokens", "0%"]].map(([k, v]) => (
+                  {[["Day 1 max", "1%"], ["Day 100 max", "100%"], ["Cooldown", "24h"], ["Tax", "0%"]].map(([k, v]) => (
                     <div key={k} className="flex items-baseline justify-between gap-3 border-b border-dotted border-[var(--ink)]/40 pb-1">
                       <dt className="text-[12px]">{k}</dt>
                       <dd className="display text-[22px] leading-none">{v}</dd>
@@ -94,7 +94,7 @@ export default function Newspaper() {
 
           {/* index */}
           <div className="mt-7 flex flex-wrap items-center justify-between gap-3 border-t-[3px] border-double border-[var(--ink)] pt-3">
-            {["Inside", "The 1% rule, p.3", "Whales, p.5", "The interrogation, p.7", "Tokenomics, p.9"].map((t, i) => (
+            {["Inside", "The 100-day curve, p.3", "Whales, p.5", "The interrogation, p.7", "Tokenomics, p.9"].map((t, i) => (
               <span key={t} className={`meta !text-[10px] ${i === 0 ? "bg-[var(--ink)] px-2 py-0.5 text-[var(--paper)]" : ""}`}>{t}</span>
             ))}
           </div>

@@ -272,6 +272,13 @@ img { max-width: 100%; }
   color: inherit; width: 100%; padding: 6px 0 10px; outline: none; border-radius: 0;
 }
 .field:focus { border-bottom-color: var(--lime); }
+/* the 100-day curve's day slider */
+.curve-range { -webkit-appearance: none; appearance: none; height: 28px; background: transparent; cursor: pointer; }
+.curve-range::-webkit-slider-runnable-track { height: 2px; background: rgba(236,230,214,0.2); }
+.curve-range::-moz-range-track { height: 2px; background: rgba(236,230,214,0.2); }
+.curve-range::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; margin-top: -10px; border-radius: 50%; background: var(--lime); border: 3px solid var(--night-2); box-shadow: 0 0 0 1px var(--lime); }
+.curve-range::-moz-range-thumb { width: 16px; height: 16px; border-radius: 50%; background: var(--lime); border: 3px solid var(--night-2); box-shadow: 0 0 0 1px var(--lime); }
+.curve-range:focus-visible { outline: 1px solid var(--lime); outline-offset: 4px; }
 
 /* ---------- faq ---------- */
 .faq-body { overflow: hidden; height: 0; }

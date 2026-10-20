@@ -1,12 +1,14 @@
 const ITEMS = [
   "Buy freely",
   "Sell from day one",
-  "Max 1% per outbound",
+  "Day 1: max 1%",
+  "Day 100: max 100%",
   "Rolling 24h cooldown",
   "No whale exceptions",
   "0% tax",
   "0% team",
-  "100% genesis liquidity",
+  "90% genesis liquidity",
+  "10% reserved",
   "Read the contract",
 ];
 

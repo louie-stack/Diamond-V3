@@ -10,7 +10,7 @@ const mono = IBM_Plex_Mono({ weight: ["400", "500", "600"], subsets: ["latin"], 
 export const metadata: Metadata = {
   title: "$DIAMOND. The world's first anti-jeet memecoin.",
   description:
-    "You can sell. You just can't jeet. Every wallet gets one outbound transaction per rolling 24 hours, capped at 1% of its holdings. Diamond hands, enforced by code.",
+    "You can sell. You just can't jeet. A 100-day sell curve: every wallet can move 1% of its bag on Day 1, rising 1% a day until Day 100. Anti-jeet early. Free market over time.",
   icons: { icon: "/favicon.png" },
   openGraph: {
     title: "$DIAMOND. Diamond hands, enforced by code.",

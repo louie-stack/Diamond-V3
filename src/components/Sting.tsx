@@ -11,6 +11,10 @@ const START = 1_000_000;
 const HOURS = 24;
 const SPEED = 2.4; // simulated hours per real second
 const fmt = (n: number) => n.toLocaleString("en-US");
+/** the 100-day curve: day N allows N% of the current bag, after Day 100 there is no limit */
+const CURVE_END = 100;
+const free = (day: number) => day > CURVE_END;
+const capOf = (bal: number, day: number) => (free(day) ? bal : Math.floor((bal * day) / 100));
 
 type Line = { t: string; kind: "ok" | "deny" | "info" };
 
@@ -18,18 +22,20 @@ type Line = { t: string; kind: "ok" | "deny" | "info" };
 export default function Sting() {
   const [balance, setBalance] = useState(START);
   const [elapsed, setElapsed] = useState<number | null>(null);
+  const [day, setDay] = useState(1);
   const [log, setLog] = useState<Line[]>([
-    { t: "Wallet loaded. 1,000,000 $DIAMOND. No cooldown. First outbound available now.", kind: "info" },
+    { t: "Day 1. Wallet loaded. 1,000,000 $DIAMOND. No cooldown. First outbound available now.", kind: "info" },
   ]);
   const [stamp, setStamp] = useState<{ text: string; kind: "deny" | "ok"; id: number } | null>(null);
   const [sells, setSells] = useState(0);
   const elapsedRef = useRef<number | null>(null);
   const balanceRef = useRef(START);
+  const dayRef = useRef(1);
   const console_ = useRef<HTMLDivElement>(null);
   const logBox = useRef<HTMLDivElement>(null);
   const active = elapsed !== null;
 
-  const max = Math.floor(balance / 100);
+  const max = capOf(balance, day);
   const push = (l: Line) => setLog((prev) => [...prev.slice(-7), l]);
 
   useEffect(() => {
@@ -46,7 +52,15 @@ export default function Sting() {
         elapsedRef.current = null;
         setElapsed(null);
         const b = balanceRef.current;
-        push({ t: `24h elapsed. CLEAR. Limit recalculated from current balance: 1% of ${fmt(b)} = ${fmt(Math.floor(b / 100))}. Unused allowance did not carry over.`, kind: "ok" });
+        const d = dayRef.current + 1;
+        dayRef.current = d;
+        setDay(d);
+        push({
+          t: free(d)
+            ? `24h elapsed. Day ${d}. The curve is done. No limit, no cooldown. Free market.`
+            : `24h elapsed. Day ${d}. CLEAR. Limit recalculated from current balance: ${d}% of ${fmt(b)} = ${fmt(capOf(b, d))}. Unused allowance did not carry over.`,
+          kind: "ok",
+        });
         sfx.ching();
         return;
       }
@@ -79,15 +93,20 @@ export default function Sting() {
 
   const sell = (amount: number, label: string) => {
     if (elapsedRef.current !== null) return deny(`Cooldown running. ${remaining()} remaining.`);
-    if (amount > max) return deny(`That's a jeet. ${label} is ${fmt(amount)}. Max outbound is 1% = ${fmt(max)}.`);
+    if (amount > max) return deny(`That's a jeet. ${label} is ${fmt(amount)}. Day ${day} max outbound is ${day}% = ${fmt(max)}.`);
+    if (amount <= 0) return;
     const next = balance - amount;
     balanceRef.current = next;
     setBalance(next);
     setSells((s) => s + 1);
     setStamp({ text: "Sold", kind: "ok", id: Date.now() });
-    push({ t: `Sold ${fmt(amount)} (${label}). Balance ${fmt(next)}. Rolling 24h cooldown started.`, kind: "ok" });
-    elapsedRef.current = 0;
-    setElapsed(0);
+    if (free(day)) {
+      push({ t: `Sold ${fmt(amount)} (${label}). Balance ${fmt(next)}. Day ${day}: no cooldown, no limit.`, kind: "ok" });
+    } else {
+      push({ t: `Sold ${fmt(amount)} (${label}). Balance ${fmt(next)}. Rolling 24h cooldown started.`, kind: "ok" });
+      elapsedRef.current = 0;
+      setElapsed(0);
+    }
     sfx.ching();
     sfx.thud();
   };
@@ -101,14 +120,30 @@ export default function Sting() {
     });
     sfx.ching();
   };
+  const jump = (d: number) => {
+    dayRef.current = d;
+    elapsedRef.current = null;
+    setDay(d);
+    setElapsed(null);
+    const b = balanceRef.current;
+    push({
+      t: free(d)
+        ? `Skipped to Day ${d}. The curve is over. Normal holders are unrestricted.`
+        : `Skipped to Day ${d}. Cooldown clear. Max outbound is now ${d}% of ${fmt(b)} = ${fmt(capOf(b, d))}.`,
+      kind: "info",
+    });
+    sfx.flip();
+  };
   const reset = () => {
     balanceRef.current = START;
     elapsedRef.current = null;
+    dayRef.current = 1;
+    setDay(1);
     setBalance(START);
     setElapsed(null);
     setSells(0);
     setStamp(null);
-    setLog([{ t: "Wallet reset. 1,000,000 $DIAMOND. No cooldown.", kind: "info" }]);
+    setLog([{ t: "Wallet reset. Day 1. 1,000,000 $DIAMOND. No cooldown.", kind: "info" }]);
     sfx.flip();
   };
 
@@ -126,7 +161,7 @@ export default function Sting() {
           n="Interlude"
           label="The sting"
           title="Try to jeet."
-          aside="A wallet. A sell button. The rule. Go on. The demo clock runs at 24 hours in ten seconds."
+          aside="A wallet. A sell button. The curve. Go on. The demo clock runs at 24 hours in ten seconds, and every 24 hours is a new day."
         />
 
         <div ref={console_} className="mt-16 grid gap-px bg-[var(--line-d)] lg:mt-20 lg:grid-cols-[1.15fr_1fr]" data-fx="rise">
@@ -134,14 +169,14 @@ export default function Sting() {
           <div className="relative bg-[var(--night)] p-7 sm:p-10">
             <div className="flex flex-wrap items-start justify-between gap-6">
               <div>
-                <p className="meta opacity-50">Wallet 0xD1A...0ND</p>
+                <p className="meta opacity-50">Wallet 0xD1A...0ND · <span className="text-[var(--lime)]">Day {day}</span></p>
                 <p className="display mt-3 text-[clamp(48px,5vw,76px)] leading-none tabular-nums">{fmt(balance)}</p>
                 <p className="meta mt-2 opacity-50">$DIAMOND held</p>
               </div>
               <div className="text-right max-sm:text-left">
                 <p className="meta opacity-50">Max next outbound</p>
                 <p className="display mt-3 text-[clamp(48px,5vw,76px)] leading-none text-[var(--lime)] tabular-nums">{fmt(max)}</p>
-                <p className="meta mt-2 opacity-50">1% of current bag</p>
+                <p className="meta mt-2 opacity-50">{free(day) ? "No limit. Curve complete" : `${day}% of current bag`}</p>
               </div>
             </div>
 
@@ -151,8 +186,8 @@ export default function Sting() {
                 <button type="button" onClick={() => sell(Math.floor(balance / 500), "0.2%")} className="btn btn--line">
                   Sell 0.2%
                 </button>
-                <button type="button" onClick={() => sell(max, "1%")} className="btn btn--lime">
-                  Sell 1% (max)
+                <button type="button" onClick={() => sell(max, free(day) ? "the max" : `${day}%`)} className="btn btn--lime">
+                  {free(day) ? "Sell max" : `Sell ${day}% (max)`}
                 </button>
                 <button
                   type="button"
@@ -162,6 +197,14 @@ export default function Sting() {
                 >
                   Sell all
                 </button>
+              </div>
+              <p className="meta mt-8 opacity-50">Protocol age</p>
+              <div className="mt-4 flex flex-wrap items-center gap-3">
+                {[1, 25, 50, 100, 101].map((d) => (
+                  <button key={d} type="button" onClick={() => jump(d)} className={`btn btn--line btn--sm ${day === d ? "!border-[var(--lime)] !text-[var(--lime)]" : ""}`}>
+                    Day {d}
+                  </button>
+                ))}
               </div>
               <p className="meta mt-8 opacity-50">Inbound</p>
               <div className="mt-4 flex flex-wrap items-center gap-5">
@@ -213,7 +256,7 @@ export default function Sting() {
                 <p className={`display mt-2 text-[52px] leading-none tabular-nums ${active ? "text-[var(--bone)]" : "text-[var(--lime)]"}`}>
                   {active ? `${lh}h ${String(lm).padStart(2, "0")}m` : "Clear"}
                 </p>
-                <p className="body-s mt-2 text-[var(--bone)]/60">{active ? "One outbound already used. Wait it out." : "Next outbound available now."}</p>
+                <p className="body-s mt-2 text-[var(--bone)]/60">{active ? "One outbound already used. Wait it out." : free(day) ? "Past Day 100. No cooldown." : "Next outbound available now."}</p>
                 <p className="meta mt-3 opacity-40">Sells this session: {sells}</p>
               </div>
             </div>

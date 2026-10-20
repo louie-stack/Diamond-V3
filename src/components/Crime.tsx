@@ -112,7 +112,7 @@ const LOG = ["Case opened", "The promise", "The dump", "The rule", "The verdict"
  * sticky stage. Scroll sets data-step (0 to 4); every visual state lives in
  * CSS. JS only aims the camera, types the captions and runs the price.
  *   0  the scene, sealed        1  the promise, the pump
- *   2  the whale, the body      3  the replay with the 1% rule
+ *   2  the whale, the body      3  the replay with the day-1 limit
  *   4  the verdict
  */
 export default function Crime() {
@@ -345,7 +345,7 @@ export default function Crime() {
 
                 <g className="cr-floor">
                   <line x1={lastB.x - 300} x2={whale2X + 120} y1={FLOOR} y2={FLOOR} stroke="var(--lime)" strokeWidth="2.5" strokeDasharray="10 7" />
-                  <text x={whale2X + 132} y={FLOOR + 6} fontSize="19" fill="var(--lime)" fontFamily="var(--font-term)" letterSpacing="2">1% FLOOR</text>
+                  <text x={whale2X + 132} y={FLOOR + 6} fontSize="19" fill="var(--lime)" fontFamily="var(--font-term)" letterSpacing="2">DAY 1: 1%</text>
                 </g>
                 <Candles data={B} cls="c2" />
                 <rect className="cr-whale2" x={whale2X - 16} y={lastB.c} width="32" height="380" fill="var(--red)" />
@@ -424,7 +424,7 @@ export default function Crime() {
                 <p className="display cr-final__line">
                   Buy as much as you want. Sell from day one.
                   <br />
-                  <span className="text-[var(--red)]">But no wallet can dump its entire bag at once.</span>
+                  <span className="text-[var(--red)]">But while the market is young, no wallet can dump its entire bag at once.</span>
                 </p>
                 <div className="cr-verdict">
                   {["No promises.", "No pinky swears.", "No “trust the whales.”"].map((t) => (

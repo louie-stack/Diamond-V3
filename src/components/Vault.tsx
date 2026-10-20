@@ -9,7 +9,7 @@ const STEP = 36; // degrees per digit
 
 /**
  * One evidence tag is a locker door. A small combination dial sits in its corner; dial
- * 0-0-1 (the 1% rule) and the door swings open on what's inside.
+ * 0-0-1 (Day 1, 1%) and the door swings open on what's inside.
  */
 export default function Vault({ children }: { children: ReactNode }) {
   const dial = useRef<HTMLButtonElement>(null);

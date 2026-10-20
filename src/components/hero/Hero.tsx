@@ -197,9 +197,9 @@ export default function Hero() {
       </div>
 
       <dl className="hero__stats" aria-label="The rule">
-        <div><dt className="meta">Max outbound</dt><dd className="display">1%</dd></div>
+        <div><dt className="meta">Day 1 max</dt><dd className="display">1%</dd></div>
+        <div><dt className="meta">Day 100 max</dt><dd className="display">100%</dd></div>
         <div><dt className="meta">Cooldown</dt><dd className="display">24h</dd></div>
-        <div><dt className="meta">Tax</dt><dd className="display">0%</dd></div>
       </dl>
       </div>
 

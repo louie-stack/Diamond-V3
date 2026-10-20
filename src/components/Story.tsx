@@ -8,7 +8,7 @@ import Rip from "./Rip";
 /* ---------------------------------------------------------------- */
 /* 01. The crime, as a triptych.                                     */
 /* ---------------------------------------------------------------- */
-/* 02. The 1% rule, as four exhibits.                                 */
+/* 02. The 100-day curve, as four exhibits.                          */
 /* ---------------------------------------------------------------- */
 const EXHIBITS = [
   {
@@ -20,12 +20,12 @@ const EXHIBITS = [
     lines: ["Your first outbound is available straight away.", "There is no initial 24-hour lock."],
   },
   {
-    tag: "Exhibit C", mark: "C", title: "Max 1%", big: "1%",
-    lines: ["Each successful outbound can move a maximum of 1% of your current bag.", "No matter how big the bag."],
+    tag: "Exhibit C", mark: "C", title: "Day 1: max 1%", big: "1%",
+    lines: ["On Day 1, an outbound can move up to 1% of your current bag. Day 2, 2%. Day 100, 100%.", "Then the limit is gone."],
   },
   {
     tag: "Exhibit D", mark: "D", title: "Then 24 hours", big: "24h",
-    lines: ["Each outbound starts a rolling 24-hour cooldown.", "Unused allowance never carries over."],
+    lines: ["Each outbound starts your own rolling 24-hour cooldown, so wallets never unlock all at once.", "Unused allowance never carries over."],
   },
 ];
 
@@ -34,7 +34,7 @@ export function EvidenceBoard() {
     <section id="rule" className="sec sec--night2 scroll-mt-16 overflow-hidden">
       <SceneBg src="/art/case/pattern.webp" tone="var(--night-2)" height="min(92vh, 900px)" opacity={0.5} position="center 30%" />
       <div className="wrap relative">
-        <SecHead n="02" label="The 1% rule" size="h-m" title="One rule changes the game." aside="Four exhibits. One mechanism. No exceptions." />
+        <SecHead n="02" label="The 100-day curve" size="h-m" title="One curve changes the game." aside="Four exhibits. One mechanism. No exceptions. Strongest when the market is youngest." />
 
         <div className="mt-16 grid border-l border-t border-[var(--line-d)] sm:grid-cols-2 lg:mt-24 lg:grid-cols-4">
           {EXHIBITS.map((e, i) => {
@@ -117,9 +117,9 @@ export function Wanted() {
         </figure>
 
         <div>
-          <SecHead n="03" label="Whales" size="h-m" title={<>Whales can buy.<br />Whales can&apos;t dump.</>} />
+          <SecHead n="03" label="Whales" size="h-m" title={<>Whales can buy.<br />Can&apos;t nuke the chart.</>} />
           <p className="body-l mt-8 max-w-[560px] opacity-80" data-fx="rise">
-            A whale owning 5% of the supply does not get to dump 5% into the pool. Its maximum next outbound is:
+            A whale owning 5% of the supply does not get to dump 5% into the pool. On Day 1, its maximum next outbound is:
           </p>
 
           <div className="mt-8 grid max-w-[620px] grid-cols-[1fr_auto_1fr] items-end gap-4 border-y border-[var(--line-l)] py-8" data-fx="rise">
@@ -135,7 +135,7 @@ export function Wanted() {
           </div>
 
           <p className="body-l mt-8 max-w-[560px] opacity-80" data-fx="rise">
-            Then it waits 24 hours. The same rule applies again based on whatever balance remains.
+            Then it waits 24 hours. The next day the limit is a little higher, worked out from whatever balance remains. By the time a whale can move the whole bag, the market has had 100 days to grow up.
           </p>
 
           <p className="display mt-12 text-[clamp(40px,3.6vw,56px)] leading-none" data-fx="rise">Big bag? Same rules.</p>
@@ -185,7 +185,7 @@ export function Interrogation() {
         </div>
 
         <div className="mx-auto mt-16 grid max-w-[980px] gap-px bg-[var(--line-d)] sm:grid-cols-3">
-          {["You can still take profit.", "You can still leave.", "You can still sell from the moment you buy."].map((t, i) => (
+          {["You can still take profit.", "You can still leave.", "You can still sell from Day 1."].map((t, i) => (
             <div key={t} className="bg-black p-6 sm:p-7" data-fx="rise" data-fx-delay={i * 0.08}>
               <span className="meta text-[var(--lime)]">Permitted</span>
               <p className="mt-3 text-[19px] leading-snug">{t}</p>
@@ -211,6 +211,9 @@ export function Interrogation() {
               Selling is allowed.
               <br />
               <span className="text-[var(--red)]">Dumping isn&apos;t.</span>
+            </p>
+            <p className="body-l mt-8 max-w-[520px] opacity-80" data-fx="rise">
+              This is not a lockup. The limit is on how fast one wallet can exit, and it eases off every single day.
             </p>
             <div className="mt-12 flex flex-wrap items-center gap-5">
               <span className="meta opacity-60" data-fx="rise">Welcome to:</span>

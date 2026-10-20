@@ -14,11 +14,12 @@ import RainWindow from "./footer/RainWindow";
 const NOS = [
   "No hidden mint.",
   "No blacklist.",
-  "No adjustable sell limit.",
+  "No adjustable sell curve.",
   "No adjustable cooldown.",
   "No privileged holder whitelist.",
   "No owner switch that can change the rules later.",
   "No permanent exemption for the deployer.",
+  "No admin power over the Reserve after launch.",
 ];
 
 const Cross = () => (
@@ -69,15 +70,16 @@ export function Declassified() {
               </p>
             </div>
 
-            <div className="mt-12 grid gap-px border border-[var(--line-l)] bg-[var(--line-l)] sm:grid-cols-2 lg:grid-cols-[1.6fr_1fr_1fr_1fr_1fr]">
+            <div className="mt-12 grid gap-px border border-[var(--line-l)] bg-[var(--line-l)] sm:grid-cols-2 lg:grid-cols-[1.6fr_1fr_1fr_1fr_1fr_1fr]">
               {[
                 ["1,000,000,000", "$DIAMOND, fixed supply"],
-                ["100%", "genesis liquidity"],
+                ["90%", "genesis liquidity"],
+                ["10%", "the Reserve"],
                 ["0%", "team allocation"],
                 ["0%", "presale"],
                 ["0%", "transfer tax"],
               ].map(([v, k], i) => (
-                <div key={k} className={`bg-[var(--bone)] px-5 py-6 ${i === 0 ? "sm:col-span-2 lg:col-span-1" : ""}`} data-fx="rise" data-fx-delay={i * 0.06}>
+                <div key={k} className="bg-[var(--bone)] px-5 py-6" data-fx="rise" data-fx-delay={i * 0.06}>
                   <p className="display text-[clamp(36px,3.4vw,52px)] leading-none tabular-nums">
                     {i === 0 ? <span data-count="1000000000">{v}</span> : v}
                   </p>
@@ -99,10 +101,12 @@ export function Declassified() {
               <p className="meta opacity-50">Owner privileges on file. <span className="max-sm:hidden">Hover</span><span className="sm:hidden">Tap</span> to unredact.</p>
               <dl className="mono mt-4 grid gap-3 text-[14px] sm:grid-cols-2">
                 {[
-                  ["Adjustable sell limit", "None. Fixed at 1%."],
+                  ["Adjustable sell curve", "None. 1% to 100% over 100 days."],
                   ["Adjustable cooldown", "None. Fixed at 24h."],
                   ["Holder whitelist", "None."],
                   ["Owner switch", "None. Nothing to flip."],
+                  ["Reserve holder", "Unknown. Not yet found."],
+                  ["Reserve limit", "1% per 24h. Forever."],
                 ].map(([k, v]) => (
                   <div key={k} className="flex flex-wrap items-baseline gap-x-3">
                     <dt className="opacity-60">{k}:</dt>
@@ -164,6 +168,7 @@ export function Memo() {
               <p>$DIAMOND does not guarantee the price goes up.</p>
               <p>It does not mean the market can only fall 1% per day.</p>
               <p>It does not prevent many different holders from selling.</p>
+              <p>It is not designed to control the market forever.</p>
               <p>What it does is much simpler:</p>
             </div>
             <p className="display mt-7 text-[clamp(32px,2.8vw,44px)] leading-[1] text-[var(--red)]">One wallet cannot dump a large bag all at once.</p>
@@ -324,7 +329,7 @@ const FOOT = [
     title: "The file",
     links: [
       { label: "Teaser", href: "#teaser" },
-      { label: "The 1% rule", href: "#rule" },
+      { label: "The 100-day curve", href: "#rule" },
       { label: "Why Diamond", href: "#why" },
       { label: "Tokenomics", href: "#tokenomics" },
     ],
@@ -409,8 +414,8 @@ export function Footer() {
         <div className="mt-[clamp(72px,8vw,120px)] grid gap-y-10 border-t border-[var(--line-d)] pt-8 lg:grid-cols-12 lg:gap-x-[var(--gut)]">
           <p className="max-w-[560px] text-[13px] leading-[1.65] text-[var(--bone)]/42 lg:col-span-5">
             $DIAMOND is a memecoin and experimental token mechanism. Cryptocurrency is volatile and involves substantial risk.
-            The anti-jeet mechanism restricts the rate at which individual addresses can move $DIAMOND; it does not guarantee
-            price stability, liquidity, profitability, or protection against market losses.
+            Experimental memecoin mechanism. For its first 100 days, $DIAMOND restricts the rate at which individual addresses can
+            move it; it does not guarantee price stability, liquidity, profitability, or protection against market losses.
           </p>
           <div className="meta grid content-start items-start grid-cols-2 gap-x-4 gap-y-3 text-[var(--bone)]/45 sm:grid-cols-3 sm:gap-x-[var(--gut)] lg:col-span-6 lg:col-start-7">
             <span>© 2026 Diamond Hands</span>
