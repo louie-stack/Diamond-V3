@@ -3,111 +3,85 @@
 import { useEffect, useRef } from "react";
 import { sfx } from "@/lib/sfx";
 import SecHead from "./SecHead";
-import type { Vault } from "./vault3d";
 
 /**
- * Chapter one: the 100-day curve, explained with your own bag. The bag is 100
- * diamonds in a vault; on Day N, N of them are free to move and the rest stay
- * locked, filling from the bottom up like a rising level. One sentence says the
- * same thing in words, and the curve underneath is the timeline you drag. It
- * plays on its own: one point a day, a hold at Day 100, then the vault relocks.
- * JS writes the day into CSS vars, a few text nodes and is-on classes.
+ * Chapter one: the 100-day curve, as one real chart. X is the protocol's age,
+ * Y is the share of your bag you may sell in a 24-hour window. The lime line is
+ * $DIAMOND (Day N = N%); the red dashed line is any other launch (100% from
+ * Day 1). The wedge between them is what the curve protects. A playhead walks
+ * the days on its own and the chart can be dragged; JS writes --x / --y and the
+ * readout text, CSS draws the rest.
  */
 
-const BEATS = [
-  { from: 1, head: "Day 1 is the strictest day.", sub: "This is when a whale would strike, so this is when the rules are strongest. Selling is still allowed. Dumping everything is not." },
-  { from: 10, head: "One more point, every day.", sub: "The same for every holder. No VIP wallets, no exemptions. Each wallet runs its own 24-hour clock, so nobody unlocks at the same moment." },
-  { from: 25, head: "A quarter of the way out.", sub: "Holders have been free to sell since Day 1. What nobody could do was empty a giant bag into everyone else." },
-  { from: 50, head: "Halfway.", sub: "Liquidity deeper, holders spread out, a chart that grew up under protection. The limit keeps stepping back." },
-  { from: 75, head: "The cuffs are loosening.", sub: "Protection when it matters most. Freedom when it doesn't." },
-  { from: 100, head: "Then it gets out of the way.", sub: "From Day 100 every holder can move their whole bag. No adjustable curve. No insider exemption. No hidden switch." },
+/* the plot runs Day 0 to Day 125; the last fifth is the "after Day 100" zone */
+const SPAN = 125;
+const END = 100 / SPAN;
+const xOf = (d: number) => Math.min(d, SPAN) / SPAN;
+
+/* the run: a beat on Day 1, one steady glide along the whole line to the end
+   of the chart, a pause there, a blink, and again from Day 1 */
+const REST = 1.4;
+const RUN = 11.3;
+const PAUSE = 2;
+const RESET = 0.4;
+const LOOP = REST + RUN + PAUSE + RESET;
+const dayAt = (t: number) =>
+  t < REST ? 1 : t < REST + RUN ? 1 + ((SPAN - 1) * (t - REST)) / RUN : t < REST + RUN + PAUSE ? SPAN : 1;
+
+const RULES = [
+  { k: "+1% every day", v: "Day 1 you can sell 1% of your bag. Day 2, 2%. Day 50, 50%. The same curve for every wallet." },
+  { k: "One sell per 24 hours", v: "Each wallet runs its own 24-hour clock, so nobody unlocks at the same moment and nothing stacks up." },
+  { k: "Day 100: fully free", v: "After Day 100 the limit is gone for good. No adjustable curve, no insider exemption, no hidden switch." },
 ];
-
-/* the run: one straight climb, a hold on the open vault, then it relocks */
-const DRAW = 25;
-const HOLD = 5;
-const DOWN = 1.2;
-const LOOP = DRAW + HOLD + DOWN;
-const FINAL = 101;
-const dayAt = (t: number) => (t < DRAW ? 1 + (99 * t) / DRAW : t < DRAW + HOLD ? FINAL : 100 - (99 * (t - DRAW - HOLD)) / DOWN);
-const timeOf = (d: number) => (d > 100 ? DRAW : ((d - 1) / 99) * DRAW);
-
-/* the vault fills from the bottom row up, left to right: cell i opens on day i + 1 */
-const CELLS = Array.from({ length: 100 }, (_, i) => ({ i, row: 9 - Math.floor(i / 10), col: i % 10 }));
 
 export default function Curve() {
   const root = useRef<HTMLElement>(null);
-  const stage = useRef<HTMLDivElement>(null);
-  const scrub = useRef<HTMLDivElement>(null);
+  const plot = useRef<HTMLDivElement>(null);
   const dayEl = useRef<HTMLSpanElement>(null);
-  const nEl = useRef<HTMLSpanElement>(null);
-  const sellEl = useRef<HTMLSpanElement>(null);
+  const pctEl = useRef<HTMLSpanElement>(null);
   const protEl = useRef<HTMLSpanElement>(null);
-  const freeEl = useRef<HTMLSpanElement>(null);
-  const lockEl = useRef<HTMLSpanElement>(null);
-  const nextEl = useRef<HTMLSpanElement>(null);
+  const bagEl = useRef<HTMLSpanElement>(null);
+  const yEl = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
-    const st = stage.current, sc = scrub.current;
-    if (!st || !sc) return;
+    const pl = plot.current;
+    if (!pl) return;
     const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const gems = Array.from(st.querySelectorAll<HTMLElement>(".vx__gem"));
-    const beats = Array.from(st.querySelectorAll<HTMLElement>(".vx__beat"));
-    const ticks = Array.from(st.querySelectorAll<HTMLElement>(".bt-scrub__t"));
-    let raf = 0, t = 0, last = 0, visible = false, held = false, resume = 0;
-    let lastDay = -1, beat = -1;
-    // the 3D case, once it loads; the flat grid stands in until then (or for good, without WebGL)
-    let vault: Vault | null = null, gone = false;
-    const host = st.querySelector<HTMLElement>(".vx__grid")!;
-    import("./vault3d").then((m) => {
-      if (gone) return;
-      vault = m.createVault(host);
-      if (!vault) return;
-      st.dataset.gl = "1";
-      const p = Math.min(100, Math.max(1, lastDay));
-      vault.set(p, lastDay > 100, false, false);
-    });
+    const lit = pl.querySelector<HTMLElement>(".cv__sell--lit")!;
+    const guard = pl.querySelector<HTMLElement>(".cv__prot--lit")!;
+    let raf = 0, t = 0, last = 0, visible = false, held = false, resume = 0, lastDay = -1;
 
-    const show = (d: number, down = false) => {
-      const final = d > 100.5;
-      const dc = final ? 100 : Math.min(100, Math.max(1, d));
-      const day = final ? FINAL : Math.max(1, Math.floor(d + 1e-6));
-      const p = Math.min(100, day);
-      st.style.setProperty("--x", ((dc - 1) / 99).toFixed(4));
-      st.dataset.down = down ? "1" : "0";
+    const show = (d: number) => {
+      const free = d > 100;
+      const dc = free ? 100 : Math.max(1, d);
+      const x = xOf(free ? d : dc);
+      const p = Math.floor(dc + 1e-6);
+      pl.style.setProperty("--x", x.toFixed(4));
+      pl.style.setProperty("--y", (dc / 100).toFixed(4));
+      // the lit wedges grow behind the playhead
+      const X = (x * 100).toFixed(2);
+      const Y = (100 - dc).toFixed(2);
+      lit.style.clipPath = free
+        ? `polygon(0 100%, ${END * 100}% 0, ${X}% 0, ${X}% 100%)`
+        : `polygon(0 100%, ${X}% ${Y}%, ${X}% 100%)`;
+      guard.style.clipPath = free
+        ? `polygon(0 0, ${END * 100}% 0, 0 100%)`
+        : `polygon(0 0, ${X}% 0, ${X}% ${Y}%, 0 100%)`;
+      pl.style.setProperty("--line", `inset(0 ${(100 - x * 100).toFixed(2)}% 0 0)`);
+      const day = free ? 101 : p;
       if (day === lastDay) return;
       const fwd = day > lastDay && lastDay !== -1;
+      const was = pl.dataset.free === "1";
       lastDay = day;
-      st.style.setProperty("--p", `${p}%`);
-      st.style.setProperty("--pf", (p / 100).toFixed(2));
-      if (dayEl.current) dayEl.current.textContent = final ? "100+" : String(day).padStart(3, "0");
-      if (nEl.current) nEl.current.textContent = String(p);
-      if (sellEl.current) sellEl.current.textContent = final ? "All" : `${p}%`;
-      if (protEl.current) protEl.current.textContent = final ? "None" : `${100 - p}%`;
-      if (freeEl.current) freeEl.current.textContent = String(p);
-      if (lockEl.current) lockEl.current.textContent = String(100 - p);
-      if (nextEl.current) nextEl.current.textContent = final ? "Anytime" : "24h later";
-      gems.forEach((g, i) => {
-        const on = i < p;
-        if (on === g.classList.contains("is-on")) return;
-        g.classList.toggle("is-on", on);
-        // the newest one pops; on a scrub or a relock they just switch
-        g.classList.toggle("is-new", on && fwd && !held && !down);
-      });
-      ticks.forEach((k, i) => k.classList.toggle("is-on", i < p));
-      vault?.set(p, final, down, fwd && !held && !down);
-      const was = st.dataset.final === "1";
-      st.dataset.final = final ? "1" : "0";
-      if (!held && !down) {
-        if (fwd && !final) sfx.tick();
-        if (final && !was) sfx.ching();
-      }
-      let s = 0;
-      BEATS.forEach((b, i) => { if (day >= b.from) s = i; });
-      if (s !== beat) {
-        beat = s;
-        beats.forEach((b, i) => b.classList.toggle("is-on", i === s));
-      }
+      pl.dataset.free = free ? "1" : "0";
+      pl.dataset.flip = x > 0.56 ? "1" : "0";
+      if (dayEl.current) dayEl.current.textContent = free ? "100+" : String(p).padStart(3, "0");
+      if (pctEl.current) pctEl.current.textContent = free ? "100%" : `${p}%`;
+      if (yEl.current) yEl.current.textContent = free ? "100%" : `${p}%`;
+      if (protEl.current) protEl.current.textContent = free ? "No limit. Sell any amount." : `${100 - p}% protected`;
+      if (bagEl.current) bagEl.current.textContent = free ? "all of it" : (p * 10000).toLocaleString("en-US");
+      if (!held && fwd && !free && p % 10 === 0) sfx.tick();
+      if (!held && free && !was) sfx.ching();
     };
 
     const frame = (now: number) => {
@@ -116,7 +90,8 @@ export default function Curve() {
       last = now;
       if (!held) {
         t = (t + dt) % LOOP;
-        show(dayAt(t), t > DRAW + HOLD);
+        pl.dataset.reset = t > REST + RUN + PAUSE ? "1" : "0";
+        show(dayAt(t));
       }
       if (visible) raf = requestAnimationFrame(frame);
     };
@@ -125,134 +100,136 @@ export default function Curve() {
       last = performance.now();
       raf = requestAnimationFrame(frame);
     };
-    const take = (d: number) => {
+
+    // drag or hover the chart: the pointer is the day
+    const at = (e: PointerEvent) => {
+      const r = pl.getBoundingClientRect();
+      return Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)) * SPAN;
+    };
+    const onMove = (e: PointerEvent) => {
       held = true;
-      st.dataset.held = "1";
+      pl.dataset.held = "1";
+      pl.dataset.reset = "0";
       clearTimeout(resume);
-      t = timeOf(d);
+      const d = at(e);
+      t = REST + ((Math.max(1, d) - 1) / (SPAN - 1)) * RUN;
       show(d);
     };
     const release = () => {
       clearTimeout(resume);
-      resume = window.setTimeout(() => { held = false; st.dataset.held = "0"; }, 1800);
+      resume = window.setTimeout(() => { held = false; pl.dataset.held = "0"; }, 1800);
     };
-
-    // drag the curve: the pointer is the day
-    const at = (e: PointerEvent) => {
-      const r = sc.getBoundingClientRect();
-      const f = (e.clientX - r.left) / r.width;
-      return f > 1.005 ? FINAL : 1 + Math.min(1, Math.max(0, f)) * 99;
-    };
-    const onMove = (e: PointerEvent) => take(at(e));
-    sc.addEventListener("pointermove", onMove);
-    sc.addEventListener("pointerdown", onMove);
-    sc.addEventListener("pointerleave", release);
-    sc.addEventListener("pointerup", release);
+    pl.addEventListener("pointermove", onMove);
+    pl.addEventListener("pointerdown", onMove);
+    pl.addEventListener("pointerleave", release);
+    pl.addEventListener("pointerup", release);
 
     const io = new IntersectionObserver(([e]) => {
       visible = e.isIntersecting;
       if (visible) play();
-    }, { threshold: 0.15 });
+    }, { threshold: 0.2 });
     io.observe(root.current!);
 
-    show(still ? 37 : 1);
+    show(still ? 40 : 1);
     return () => {
-      gone = true;
-      vault?.dispose();
       io.disconnect();
       cancelAnimationFrame(raf);
       clearTimeout(resume);
-      sc.removeEventListener("pointermove", onMove);
-      sc.removeEventListener("pointerdown", onMove);
-      sc.removeEventListener("pointerleave", release);
-      sc.removeEventListener("pointerup", release);
+      pl.removeEventListener("pointermove", onMove);
+      pl.removeEventListener("pointerdown", onMove);
+      pl.removeEventListener("pointerleave", release);
+      pl.removeEventListener("pointerup", release);
     };
   }, []);
 
+  const E = END * 1000;
   return (
     <section ref={root} id="curve" className="sec bt-sec scroll-mt-16 overflow-hidden" aria-label="Chapter one. The 100-day curve.">
-      {/* one gem, drawn once */}
-      <svg width="0" height="0" className="absolute" aria-hidden="true">
-        <defs>
-          <linearGradient id="vx-lit" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stopColor="#f2ffb0" />
-            <stop offset="0.45" stopColor="#ccff00" />
-            <stop offset="1" stopColor="#7fa300" />
-          </linearGradient>
-          <symbol id="vx-gem" viewBox="0 0 24 22">
-            <path d="M6 1 H18 L23 7.5 L12 21 L1 7.5 Z" style={{ fill: "var(--gb)", stroke: "var(--gs)", strokeWidth: 0.8, strokeLinejoin: "round" }} />
-            <path d="M1 7.5 H23 M6 1 L8.5 7.5 L12 21 M18 1 L15.5 7.5 L12 21 M8.5 7.5 L12 1 L15.5 7.5" style={{ fill: "none", stroke: "var(--gf)", strokeWidth: 0.6, strokeLinejoin: "round" }} />
-            <path d="M6 1 L8.5 7.5 L1 7.5 Z" style={{ fill: "var(--gh)" }} />
-            <path d="M12 1 L15.5 7.5 L8.5 7.5 Z" style={{ fill: "var(--gh2)" }} />
-          </symbol>
-        </defs>
-      </svg>
-
       <div className="wrap">
         <SecHead
           n="01"
           label="The 100-day curve"
           size="h-m"
-          title={<>Protection when it matters most.<br /><span className="text-[var(--lime)]">Then it gets out of the way.</span></>}
-          aside={<>Your bag, 100 tokens.<br />Watch how much of it can move.<br />Drag the curve to pick a day.</>}
+          title={<>Sell 1% more every day.<br /><span className="text-[var(--lime)]">Free trade by Day 100.</span></>}
+          aside={<>Your sell limit is a share of your bag.<br />It rises 1% a day for 100 days.<br />Drag the chart to pick a day.</>}
         />
 
-        <div ref={stage} className="vx mt-14 lg:mt-20" data-final="0" data-down="0" data-held="0">
-          <div className="vx__copy">
-            <p className="meta vx__k">Protocol age / Day <span ref={dayEl} className="tabular-nums text-[var(--bone)]">001</span></p>
-            <p className="display vx__line" aria-live="polite">
-              Today you can move
-              <br /><span className="vx__n"><span ref={nEl} className="tabular-nums">1</span></span> of every 100
-              <br />tokens you hold.
-            </p>
-            <dl className="vx__row">
-              <div><dt className="meta">Sellable today</dt><dd className="display tabular-nums"><span ref={sellEl}>1%</span></dd></div>
-              <div><dt className="meta">Protected</dt><dd className="display tabular-nums"><span ref={protEl}>99%</span></dd></div>
-              <div><dt className="meta">Next sell</dt><dd className="display"><span ref={nextEl}>24h later</span></dd></div>
-            </dl>
-            <div className="vx__beats">
-              {BEATS.map((b, i) => (
-                <div key={b.from} className={`vx__beat ${i === 0 ? "is-on" : ""}`}>
-                  <p className="display vx__beat-h">{b.head}</p>
-                  <p className="vx__beat-s">{b.sub}</p>
-                </div>
-              ))}
-            </div>
+        <figure className="cv mt-14 lg:mt-20" aria-label="Chart: the share of your bag you can sell each day rises from 1% on Day 1 to 100% on Day 100, then the limit disappears.">
+          <div className="cv__head meta">
+            <span>Max share of your bag you can sell, per 24 hours</span>
+            <span className="cv__key">
+              <span><b className="cv__sw cv__sw--lime" />$DIAMOND</span>
+              <span><b className="cv__sw cv__sw--red" />Any other launch</span>
+            </span>
           </div>
 
-          {/* the vault: your bag as 100 diamonds */}
-          <figure className="vx__vault" aria-hidden="true">
-            <figcaption className="vx__cap meta"><span>Your bag</span><span>100 tokens</span></figcaption>
-            <div className="vx__grid">
-              <span className="vx__level" />
-              {CELLS.map(({ i, row, col }) => (
-                <span key={i} className="vx__gem" style={{ gridRow: row + 1, gridColumn: col + 1 }}>
-                  <svg viewBox="0 0 24 22"><use href="#vx-gem" /></svg>
-                  <i className="vx__lock" />
-                </span>
-              ))}
-              <span className="vx__stamp"><span className="stamp stamp--lime">Free market</span></span>
+          <div className="cv__frame">
+            {/* y axis */}
+            <div className="cv__yaxis meta" aria-hidden="true">
+              {[100, 75, 50, 25, 0].map((v) => <span key={v} style={{ top: `${100 - v}%` }}>{v}%</span>)}
             </div>
-            <div className="vx__foot meta">
-              <span><b className="vx__dot vx__dot--on" /><span ref={freeEl} className="tabular-nums">1</span> free to move today</span>
-              <span><b className="vx__dot" /><span ref={lockEl} className="tabular-nums">99</span> locked</span>
-            </div>
-          </figure>
 
-          {/* the curve is the timeline: 100 bars, one a day, each 1% taller than the last; drag it */}
-          <div ref={scrub} className="bt-curve" aria-hidden="true">
-            <div className="bt-curve__bars">
-              {Array.from({ length: 100 }, (_, i) => (
-                <span key={i} className={`bt-scrub__t ${(i + 1) % 25 === 0 ? "is-key" : ""}`} style={{ height: `${i + 1}%` }} />
-              ))}
+            <div ref={plot} className="cv__plot" data-free="0" data-flip="0" data-held="0" data-reset="0" aria-hidden="true">
+              {[25, 50, 75].map((v) => <span key={v} className="cv__grid" style={{ top: `${100 - v}%` }} />)}
+              <span className="cv__zone" style={{ left: `${END * 100}%` }}>
+                <span className="cv__zone-k display">Free market</span>
+                <span className="cv__zone-v meta">No limit. Forever.</span>
+              </span>
+
+              {/* the wedges: protected above the line, sellable below it */}
+              <span className="cv__prot" />
+              <span className="cv__prot cv__prot--lit" />
+              <span className="cv__sell" />
+              <span className="cv__sell cv__sell--lit" />
+              <span className="cv__lbl cv__lbl--prot">
+                <span className="display">Protected</span>
+                <span className="meta">What a whale can&rsquo;t dump on you</span>
+              </span>
+              <span className="cv__lbl cv__lbl--sell">
+                <span className="display">Sellable</span>
+              </span>
+
+              <svg className="cv__svg" viewBox="0 0 1000 100" preserveAspectRatio="none">
+                <path className="cv__other" d={`M0 0 H${E}`} />
+                <path className="cv__line" d={`M0 100 L${E} 0 H1000`} />
+              </svg>
+              <svg className="cv__svg cv__svg--lit" viewBox="0 0 1000 100" preserveAspectRatio="none">
+                <path className="cv__line cv__line--lit" d={`M0 100 L${E} 0 H1000`} />
+              </svg>
+
+              <span className="cv__note cv__note--other meta">Any other launch: 100% from Day 1</span>
+
+              {/* the playhead */}
+              <span className="cv__vline" />
+              <span className="cv__hline" />
+              <span className="cv__ychip meta"><span ref={yEl}>1%</span></span>
+              <span className="cv__dot" />
+              <span className="cv__card">
+                <span className="meta cv__card-k">Day <span ref={dayEl} className="tabular-nums">001</span></span>
+                <span className="display cv__card-n tabular-nums"><span ref={pctEl}>1%</span></span>
+                <span className="cv__card-s">of your bag can be sold today</span>
+                <span className="meta cv__card-p"><span ref={protEl}>99% protected</span></span>
+                <span className="meta cv__card-b">On a 1M bag: <span ref={bagEl} className="tabular-nums text-[var(--bone)]">10,000</span></span>
+              </span>
             </div>
-            <span className="bt-scrub__head" />
-            <div className="bt-curve__lbl meta">
-              <span>Day 1 / 1%</span><span>The curve: max share of your bag per 24 hours</span><span>Day 100 / 100%</span>
+
+            {/* x axis */}
+            <div className="cv__xaxis meta" aria-hidden="true">
+              {[1, 25, 50, 75, 100].map((d) => <span key={d} style={{ left: `${xOf(d) * 100}%` }}>Day {d}</span>)}
+              <span className="cv__xaxis-after" style={{ left: `${((END + 1) / 2) * 100}%` }}>After</span>
             </div>
           </div>
-        </div>
+        </figure>
 
+        <ol className="cv__rules">
+          {RULES.map((r, i) => (
+            <li key={r.k}>
+              <span className="meta cv__rule-n">0{i + 1}</span>
+              <p className="display cv__rule-k">{r.k}</p>
+              <p className="cv__rule-v">{r.v}</p>
+            </li>
+          ))}
+        </ol>
       </div>
     </section>
   );
